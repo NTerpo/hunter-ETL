@@ -1,7 +1,15 @@
 (ns hunter-parser.ckan
   (:require [clj-http.client :as client]
-            [clojure.data.json :as json]))
+            [cheshire.core :refer :all]))
 
+(def base-url "https://catalog.data.gov/api/3/")
 
-;; (client/get
-;; "https://catalog.data.gov/api/3/action/package_search?q=environmental")
+(defn get-package-with-query
+  [query]
+  (((-> (str base-url "action/package_search?q=")
+         (str query)
+         (client/get)
+         :body
+         (parse-string))
+     "result")
+   "results"))

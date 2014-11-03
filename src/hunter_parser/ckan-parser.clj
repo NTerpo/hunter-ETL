@@ -13,9 +13,19 @@
 
 (defn get-10-most-pop-datagov-ds
   []
-  (let [response (((get-result "https://catalog.data.gov/api/3/action/package_search?q=&rows=10") :result) :results)]
-    ;; response
-    (map #(select-keys % [:title]) response)))
+  (let [response (((get-result "https://catalog.data.gov/api/3/action/package_search?q=&rows=10") :result) :results)
+        filtered (->> (map #(select-keys % [:title
+                                           :notes
+                                           :organization
+                                           :resources
+                                           ;; :extras
+                                           ;; :revision_timestamp
+                                           ]) response)
+                     (map #(assoc % :publisher (get-in % [:organization :title])))
+                     (map #(assoc % :uri (get-in % [:resources 0 :url]))))]
+    (->> filtered
+         (map #(dissoc % :organization))
+         (map #(dissoc % :resources)))))
 
 
 

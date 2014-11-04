@@ -3,6 +3,7 @@
             [cheshire.core :refer :all]))
 
 (def base-url "https://catalog.data.gov/api/3/")
+(def api-url "http://localhost:3000/api/datasets")
 
 (defn get-result
   [url]
@@ -36,3 +37,10 @@
                       :updated (% :revision_timestamp)
                       :description (% :notes)))
          (map #(dissoc % :organization :resources :extras :revision_timestamp :notes)))))
+
+(defn export-datasets-to-hunter-api
+  "FIXME: need to filter dates and should work"
+  [coll]
+  (map #(client/post api-url
+                     {:body (generate-string %)
+                      :content-type "application/json"}) coll))

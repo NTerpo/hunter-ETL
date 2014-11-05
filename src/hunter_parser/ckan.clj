@@ -13,6 +13,10 @@
       :body
       (parse-string true)))
 
+;;
+;; data.gov
+;;
+
 (defn- get-tags
   [vect]
   (vec (map #(% :name) (map #(select-keys % [:name]) vect))))
@@ -43,8 +47,35 @@
                       :description (% :notes)))
          (map #(dissoc % :organization :resources :extras :revision_timestamp :notes)))))
 
+;;
+;; datalocale - Portail Open Data de l'Aquitaine
+;;
+
+(defn get-datalocale-ds
+  "gets all datasets' metadata from the ckan API of datalocale.fr and transforms them to match the Hunter API scheme"
+  []
+  (let [response (get-result "http://catalogue.datalocale.fr//storage/f/2014-03-19T094540/datalocale-20140320-daily.json")]
+    (->> (map #(select-keys % [:title :notes :author :resources :tags :extras]) response)
+         (map #(assoc % :publisher (% :author)
+                      :uri (get-in % [:resources 0 :url])
+                      :created (get-in % [:resources 0 :created])
+                      :updated (if-not (nil? (get-in % [:resources 0 :last_modified]))
+                                 (get-in % [:resources 0 :last_modified])
+                                 (get-in % [:resources 0 :created]))
+                      :tags (% :tags)
+                      :spatial (if-not (nil? (get-in % [:extras "spatial-text"]))
+                                 (get-in % [:extras "spatial-text"])
+                                 "Aquitaine")
+                      :temporal (str (get-in % [:extras "temporal_coverage-from"]) "-" (get-in % [:extras "temporal_coverage-to"]))
+                      :description (% :notes)))
+         (map #(dissoc % :resources :extras :notes)))))
+
+;;
+;; Export
+;;
+
 (defn export-datasets-to-hunter-api
-  "Send each dataset to the Hunter API via method post: (export-datasets-to-hunter-api (get-most-po-datagov-ds 10))"
+  "Send each dataset to the Hunter API via method post"
   [coll]
   (map #(client/post api-url
                      {:body (generate-string %)

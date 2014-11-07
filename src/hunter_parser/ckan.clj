@@ -41,12 +41,13 @@
 (defn extend-temporal
   "extend the temporal coverage with dates between limits"
   [temporal]
-  (let [limits (->> (st/split temporal #"/")
-                    (map #(re-find #"[0-9]{4}" %)))]
-    (vec
-     (map str
-          (range (Integer. (first limits))
-                 (+ 1 (Integer. (last limits))))))))
+  (let [limits (re-seq #"[0-9]{4}" temporal)]
+    (if (= 1 (count limits))
+      (vec limits)
+      (vec
+       (map str
+            (range (Integer. (first limits))
+                   (+ 1 (Integer. (last limits)))))))))
 
 ;;
 ;; data.gov
@@ -76,7 +77,7 @@
                       :tags (vec (concat (tagify-title (% :title)) (extend-tags (get-tags (% :tags)))))
                       :spatial (geo-tagify "us")
                       :temporal (if (not (nil? (get-temporal (% :extras))))
-                                  (extend-temporal (get-temporal (% :extras)))
+                                   (get-temporal (% :extras))
                                   "all")
                       :updated (% :revision_timestamp)
                       :description (% :notes)))

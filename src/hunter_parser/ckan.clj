@@ -13,6 +13,15 @@
       :body
       (parse-string true)))
 
+(defn geo-tagify
+  "extend the spatial coverage tagging 'us'->'america'->'countries'->'world'"
+  [geo]
+  (let [geo (clojure.string/lower-case geo)]
+    (if-not (nil? (some #{geo} ["france" "us" "europe"]))
+      ({"france" ["france" "fr" "europe" "schengen" "eu" "ue" "countries" "world" "all"]
+        "us" ["us" "usa" "america" "united states" "united-states" "united states of america" "united-states-of-america" "world" "countries" "all"]
+        "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]} geo)
+      geo)))
 ;;
 ;; data.gov
 ;;
@@ -33,13 +42,13 @@
 (defn get-most-pop-datagov-ds
   "gets a number of the most popular datasets' metadata from the ckan API of data.gov and transforms them to match the Hunter API scheme"
   [number]
-  (let [response (((get-result (str "https://catalog.data.gov/api/3/action/package_search?q=&rows=") number) :result) :results)]
+  (let [response (((get-result (str "https://catalog.data.gov/api/3/action/package_search?q=&rows=" number)) :result) :results)]
     (->> (map #(select-keys % [:title :notes :organization :resources :tags :extras :revision_timestamp]) response)
          (map #(assoc % :publisher (get-in % [:organization :title])
                       :uri (get-in % [:resources 0 :url])
                       :created (get-in % [:resources 0 :created])
                       :tags (get-tags (% :tags))
-                      :spatial "USA"
+                      :spatial (geo-tagify "us")
                       :temporal (if (not (nil? (get-temporal (% :extras))))
                                   (get-temporal (% :extras))
                                   "all")

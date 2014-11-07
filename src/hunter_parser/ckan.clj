@@ -1,6 +1,7 @@
 (ns hunter-parser.ckan
   (:require [clj-http.client :as client]
-            [cheshire.core :refer :all]))
+            [cheshire.core :refer :all]
+            [clojure.string :as st]))
 
 (def base-url "https://catalog.data.gov/api/3/")
 (def api-url "http://localhost:3000/api/datasets")
@@ -22,6 +23,21 @@
         "us" ["us" "usa" "america" "united states" "united-states" "united states of america" "united-states-of-america" "world" "countries" "all"]
         "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]} geo)
       geo)))
+
+(defn extend-tags
+  "create new tags with the given tags vector by spliting words and cleaning"
+  [tags]
+  (vec (disj (set (->> (map st/lower-case tags)
+                       (map st/trim)
+                       (mapcat #(st/split % #"-"))
+                       (concat tags))) "report" "data" "service" "government")))
+
+(defn tagify-title
+  "create new tags from the title"
+  [title]
+  (vec (disj (set (-> (st/lower-case title)
+                      (st/split #" "))) "database" "db" "data" "dataset")))
+
 ;;
 ;; data.gov
 ;;
@@ -47,7 +63,7 @@
          (map #(assoc % :publisher (get-in % [:organization :title])
                       :uri (get-in % [:resources 0 :url])
                       :created (get-in % [:resources 0 :created])
-                      :tags (get-tags (% :tags))
+                      :tags (vec (concat (tagify-title (% :title)) (extend-tags (get-tags (% :tags)))))
                       :spatial (geo-tagify "us")
                       :temporal (if (not (nil? (get-temporal (% :extras))))
                                   (get-temporal (% :extras))

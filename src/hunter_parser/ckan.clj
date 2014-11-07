@@ -38,6 +38,16 @@
   (vec (disj (set (-> (st/lower-case title)
                       (st/split #" "))) "database" "db" "data" "dataset")))
 
+(defn extend-temporal
+  "extend the temporal coverage with dates between limits"
+  [temporal]
+  (let [limits (->> (st/split temporal #"/")
+                    (map #(re-find #"[0-9]{4}" %)))]
+    (vec
+     (map str
+          (range (Integer. (first limits))
+                 (+ 1 (Integer. (last limits))))))))
+
 ;;
 ;; data.gov
 ;;
@@ -66,7 +76,7 @@
                       :tags (vec (concat (tagify-title (% :title)) (extend-tags (get-tags (% :tags)))))
                       :spatial (geo-tagify "us")
                       :temporal (if (not (nil? (get-temporal (% :extras))))
-                                  (get-temporal (% :extras))
+                                  (extend-temporal (get-temporal (% :extras)))
                                   "all")
                       :updated (% :revision_timestamp)
                       :description (% :notes)))

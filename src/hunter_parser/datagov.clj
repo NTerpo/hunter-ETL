@@ -19,11 +19,14 @@
                 (map #(hash-map (keyword (% :key)) (% :value))
                      (map #(select-keys % [:key :value]) vect))))))
 
-(defn get-most-pop-datagov-ds
+(defn get-datagov-ds
   "gets a number of the most popular datasets' metadata from the ckan API of data.gov and transforms them to match the Hunter API scheme"
   [number offset]
-  (let [response (((get-result (str "https://catalog.data.gov/api/3/action/package_search?q=&rows=" number
-                                    "&start=" offset)) :result) :results)]
+  (let [response (((get-result (str base-url "action/package_search?q="
+                                    "&rows=" number
+                                    "&start=" offset))
+                   :result)
+                  :results)]
     (->> (map #(select-keys % [:title :notes :organization :resources :tags :extras :revision_timestamp]) response)
          (map #(assoc % :publisher (get-in % [:organization :title])
                       :uri (if-not (nil? (get-in % [:resources 0 :url]))

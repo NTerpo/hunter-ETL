@@ -68,16 +68,21 @@
 
 (defn get-most-pop-datagov-ds
   "gets a number of the most popular datasets' metadata from the ckan API of data.gov and transforms them to match the Hunter API scheme"
-  [number]
-  (let [response (((get-result (str "https://catalog.data.gov/api/3/action/package_search?q=&rows=" number)) :result) :results)]
+  [number offset]
+  (let [response (((get-result (str "https://catalog.data.gov/api/3/action/package_search?q=&rows=" number
+                                    "&start=" offset)) :result) :results)]
     (->> (map #(select-keys % [:title :notes :organization :resources :tags :extras :revision_timestamp]) response)
          (map #(assoc % :publisher (get-in % [:organization :title])
-                      :uri (get-in % [:resources 0 :url])
-                      :created (get-in % [:resources 0 :created])
+                      :uri (if-not (nil? (get-in % [:resources 0 :url]))
+                             (get-in % [:resources 0 :url])
+                             "URI Not Available")
+                      :created (if-not (nil? (get-in % [:resources 0 :created]))
+                                 (get-in % [:resources 0 :created])
+                                 (% :revision_timestamp))
                       :tags (vec (concat (tagify-title (% :title)) (extend-tags (get-tags (% :tags)))))
                       :spatial (geo-tagify "us")
                       :temporal (if (not (nil? (get-temporal (% :extras))))
-                                   (get-temporal (% :extras))
+                                  (extend-temporal (get-temporal (% :extras)))
                                   "all")
                       :updated (% :revision_timestamp)
                       :description (% :notes)))
@@ -93,7 +98,9 @@
   (let [response (get-result "http://catalogue.datalocale.fr//storage/f/2014-03-19T094540/datalocale-20140320-daily.json")]
     (->> (map #(select-keys % [:title :notes :author :resources :tags :extras]) response)
          (map #(assoc % :publisher (% :author)
-                      :uri (get-in % [:resources 0 :url])
+                      :uri (if-not (nil? (get-in % [:resources 0 :url]))
+                             (get-in % [:resources 0 :url])
+                             "URI Not Available")
                       :created (get-in % [:resources 0 :created])
                       :updated (if-not (nil? (get-in % [:resources 0 :last_modified]))
                                  (get-in % [:resources 0 :last_modified])

@@ -27,7 +27,7 @@
                                     "&start=" offset))
                    :result)
                   :results)]
-    (->> (map #(select-keys % [:title :notes :organization :resources :tags :extras :revision_timestamp]) response)
+    (->> (map #(select-keys % [:title :notes :organization :resources :tags :extras :revision_timestamp :tracking_summary]) response)
          (map #(assoc %
                  :publisher (get-in % [:organization :title])
                  :uri (if-not (nil? (get-in % [:resources 0 :url]))
@@ -43,6 +43,10 @@
                              (extend-temporal (get-temporal (% :extras)))
                              "all")
                  :updated (% :revision_timestamp)
-                 :description (% :notes)))
-         (map #(dissoc % :organization :resources :extras :revision_timestamp :notes)))))
+                 :description (% :notes)
+                 :huntscore (calculate-huntscore 0
+                                                 (get-in % [:tracking_summary :total])
+                                                 (get-in % [:tracking_summary :recent])
+                                                 0)))
+         (map #(dissoc % :organization :resources :extras :revision_timestamp :notes :tracking_summary)))))
 

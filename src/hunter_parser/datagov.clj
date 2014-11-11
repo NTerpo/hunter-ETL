@@ -43,7 +43,9 @@
                              (extend-temporal (get-temporal (% :extras)))
                              "all")
                  :updated (% :revision_timestamp)
-                 :description (% :notes)
+                 :description (if-not (nil? (% :notes))
+                                (% :notes)
+                                (% :title))
                  :huntscore (calculate-huntscore 0
                                                  (get-in % [:tracking_summary :total])
                                                  (get-in % [:tracking_summary :recent])

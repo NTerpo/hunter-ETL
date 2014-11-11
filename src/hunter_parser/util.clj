@@ -21,7 +21,7 @@
       ({"france" ["france" "fr" "europe" "schengen" "eu" "ue" "countries" "world" "all"]
         "us" ["us" "usa" "america" "united states" "united-states" "united states of america" "united-states-of-america" "world" "countries" "all"]
         "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]} geo)
-      geo)))
+      (vector geo))))
 
 (defn extend-tags
   "create new tags with the given tags vector by spliting words and cleaning"
@@ -47,6 +47,14 @@
        (map str
             (range (Integer. (first limits))
                    (+ 1 (Integer. (last limits)))))))))
+
+(defn calculate-huntscore
+  ""
+  [reuses total-views recent-views followers]
+  (reduce + [(* 1 reuses)
+             (* 0.001 total-views)
+             (* 0.005 recent-views)
+             (* 0.1 followers)]))
 
 ;;
 ;; Export

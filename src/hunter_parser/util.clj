@@ -17,19 +17,21 @@
   "extend the spatial coverage tagging 'us'->'america'->'countries'->'world'"
   [geo]
   (let [geo (clojure.string/lower-case geo)]
-    (if-not (nil? (some #{geo} ["france" "us" "europe"]))
+    (if-not (nil? (some #{geo} ["france" "us" "europe" "world"]))
       ({"france" ["france" "fr" "europe" "schengen" "eu" "ue" "countries" "world" "all"]
         "us" ["us" "usa" "america" "united states" "united-states" "united states of america" "united-states-of-america" "world" "countries" "all"]
-        "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]} geo)
+        "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]
+        "world" ["world" "all" "countries"]} geo)
       (vector geo))))
 
 (defn extend-tags
   "create new tags with the given tags vector by spliting words and cleaning"
   [tags]
-  (vec (disj (set (->> (map st/lower-case tags)
-                       (map st/trim)
-                       (mapcat #(st/split % #"-"))
-                       (concat tags))) "report" "data" "service" "government")))
+  (->> (vec (disj (set (->> (map st/lower-case tags)
+                            (map st/trim)
+                            (mapcat #(st/split % #"-"))
+                            (concat tags))) "report" "data" "service" "government"))
+       (map #(st/replace % "," ""))))
 
 (defn tagify-title
   "create new tags from the title"

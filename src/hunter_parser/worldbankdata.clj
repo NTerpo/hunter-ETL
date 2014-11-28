@@ -6,24 +6,11 @@
 
 (def base-url "http://api.worldbank.org/v2/datacatalog?format=json")
 
-(defn- get-tags
-  [vect]
-  (vec (map #(% :name) (map #(select-keys % [:name]) vect))))
-
 (defn clean-response
   [response]
   (let [resp (map :metatype (:datacatalog response))
-        clean (fn [ds] (mapcat #(vector (keyword (:id %)) (:value %)) ds))]
-    (map clean resp)))
-
-(defn- get-temporal
-  "try to find the value of 'temporal' from a data.gov metadata dataset"
-  [vect]
-  (first
-   (filter #(not (nil? %))
-           (map #(get % :temporal)
-                (map #(hash-map (keyword (% :key)) (% :value))
-                     (map #(select-keys % [:key :value]) vect))))))
+        clean (fn [ds] (apply array-map (mapcat #(vector (keyword (:id %)) (:value %)) ds)))]
+    (vec (map clean resp))))
 
 (defn get-worldbank-ds
   ""

@@ -1,10 +1,12 @@
-(ns hunter-parser.worldbankdata
+(ns hunter-parser.opendata-europa
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
             [hunter-parser.util :refer :all]))
 
-(def base-url "http://api.worldbank.org/v2/datacatalog?format=json&per_page=99")
+(def base-url "http://open-data.europa.eu/data/api/action/package_search?q=")
+
+;; curl -i http://open-data.europa.eu/data/api/action/package_search -d '{"q": ""}'
 
 (defn clean-response
   [response]
@@ -12,6 +14,9 @@
         clean (fn [ds] (apply array-map (mapcat #(vector (keyword (:id %)) (:value %)) ds)))]
     (vec (map clean resp))))
 
+
+
+;;;;
 (defn get-worldbank-ds
   "gets a number of the most popular datasets' metadata from the World Bank Data API and transforms them to match the Hunter API scheme"
   []
@@ -38,3 +43,5 @@
                                 (% :name))
                  :huntscore (calculate-huntscore 5 0 0 0)))
          (map #(dissoc % :name :granularity :topics :url :lastrevisiondate :cite :coverage)))))
+
+

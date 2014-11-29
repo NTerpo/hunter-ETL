@@ -13,35 +13,17 @@
   (let [resp (map :metatype (:datacatalog response))
         clean (fn [ds] (apply array-map (mapcat #(vector (keyword (:id %)) (:value %)) ds)))]
     (vec (map clean resp))))
+;;=> (:body (client/post "http://open-data.europa.eu/data/api/action/package_search"
+                                                   ;; {:body "{\"q\": \"\"}"
+                                                   ;;  :content-type :json
+                                                   ;;  :accept :json}))
+;;=> (first (:results (:result (parse-string response true))))
 
 
-
-;;;;
 (defn get-worldbank-ds
   "gets a number of the most popular datasets' metadata from the World Bank Data API and transforms them to match the Hunter API scheme"
   []
-  (let [response (clean-response (get-result base-url))]
-    (->> (map #(select-keys % [:name :description :url :granularity :topics :lastrevisiondate :cite :coverage]) response)
-         (map #(assoc %
-                 :publisher (if-not (nil? (% :cite))
-                              (% :cite)
-                              "World Bank Data")
-                 :uri (if-not (nil? (% :url))
-                        (% :url)
-                        "URI Not Available")
-                 :created (when-not (nil? (% :lastrevisiondate))
-                            (% :lastrevisiondate))
-                 :tags (vec (concat (tagify-title (% :name))
-                                    (extend-tags (st/split (% :topics) #" "))))
-                 :spatial (geo-tagify "world")
-                 :temporal (if (not (nil? (% :coverage)))
-                             (extend-temporal (% :coverage))
-                             "all")
-                 :updated (% :lastrevisiondate)
-                 :description (if-not (nil? (% :description))
-                                (% :description)
-                                (% :name))
-                 :huntscore (calculate-huntscore 5 0 0 0)))
-         (map #(dissoc % :name :granularity :topics :url :lastrevisiondate :cite :coverage)))))
-
+  (let [response ()]
+    (->> (map #(select-keys % [:description :temporal_coverage_from :temporal_coverage_to :keywords :title :contact_name :geographical_coverage :url :modified_date :resources]) response)
+         )))
 

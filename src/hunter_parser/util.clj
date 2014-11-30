@@ -30,14 +30,16 @@
   (->> (vec (disj (set (->> (map st/lower-case tags)
                             (map st/trim)
                             (mapcat #(st/split % #"-"))
-                            (concat tags))) "report" "data" "service" "government"))
-       (map #(st/replace % "," ""))))
+                            (concat tags))) "report" "data" "-" "service" "government"))
+       (map #(st/replace % "," ""))
+       (map #(st/replace % "(" ""))
+       (map #(st/replace % ")" ""))))
 
 (defn tagify-title
   "create new tags from the title"
   [title]
   (vec (disj (set (-> (st/lower-case title)
-                      (st/split #" "))) "database" "db" "data" "dataset" "to" "and")))
+                      (st/split #" "))) "database" "-" "db" "data" "dataset" "to" "and")))
 
 (defn extend-temporal
   "extend the temporal coverage with dates between limits"

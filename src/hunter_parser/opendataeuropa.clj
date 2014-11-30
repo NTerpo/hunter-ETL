@@ -23,16 +23,16 @@
   "gets a number of the most popular datasets' metadata from the Europa Open Data API  and transforms them to match the Hunter API scheme"
   []
   (let [response (get-response base-url)]
-    (->> (map #(select-keys % [:description :temporal_coverage_from :metadata_created :temporal_coverage_to :keywords :title :contact_name :geographical_coverage :url :modified_date :resources :views_total]) response)
+    (->> (map #(select-keys % [:description :temporal_coverage_from :metadata_created :temporal_coverage_to :keywords :title :contact_name :geographical_coverage :url :modified_date :resources]) response)
          (map #(assoc %
                  :uri (% :url)
-                 :publisher (if-not (nil? (% :contact_name))
-                              (read-string (% :contact_name))
+                 :publisher (if-not (empty? (% :contact_name))
+                              (if-not (= "" (read-string (% :contact_name)))
+                                (read-string (% :contact_name))
+                                "open-data.europa.eu")
                               "open-data.europa.eu")
-                 :spatial (if-not (empty? (% :geographical_coverage))
-                            (geo-tagify (% :geographical_coverage))
-                            (geo-tagify "europe"))
-                 :tags (vec (concat (tagify-title (% :title))
+                 :spatial (geo-tagify "europe")
+                 :tags (vec (concat (extend-tags (tagify-title (% :title)))
                                     (extend-tags (get-tags (% :keywords)))))
                  :description (if-not (empty? (% :description))
                                 (% :description)
@@ -47,9 +47,11 @@
                  :updated (if-not (empty? (% :modified_date))
                             (read-string (% :modified_date))
                             (% :metadata_created))
-                 :created (if-not (nil? (get-in % [:resources 0 :created]))
-                            (get-in % [:resources 0 :created])
-                            (% :modified_date))
+                 :created (if-not (empty? (get-in % [:resources 0 :created]))
+                               (get-in % [:resources 0 :created])
+                               (if-not (empty? (% :modified_date))
+                            (read-string (% :modified_date))
+                            (% :metadata_created)))
                  :huntscore (calculate-huntscore 5 0 0 0)))
          (map #(dissoc % :temporal_coverage_from :temporal_coverage_to :keywords :contact_name :url :geographical_coverage :modified_date :resources :metadata_created)))))
 

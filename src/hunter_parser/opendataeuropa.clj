@@ -9,7 +9,7 @@
 (defn get-response
   [url]
   (let [resp (:body (client/post base-url
-                                 {:body "{\"q\": \"\"}"
+                                 {:body "{\"q\": \"\", \"rows\":\"100\", \"sort\":\"views_total desc\"}"
                                   :content-type :json
                                   :accept :json}))
         clean-resp (:results (:result (parse-string resp true)))]
@@ -23,7 +23,7 @@
   "gets a number of the most popular datasets' metadata from the Europa Open Data API  and transforms them to match the Hunter API scheme"
   []
   (let [response (get-response base-url)]
-    (->> (map #(select-keys % [:description :temporal_coverage_from :metadata_created :temporal_coverage_to :keywords :title :contact_name :geographical_coverage :url :modified_date :resources]) response)
+    (->> (map #(select-keys % [:description :temporal_coverage_from :metadata_created :temporal_coverage_to :keywords :title :contact_name :geographical_coverage :url :modified_date :resources :views_total]) response)
          (map #(assoc %
                  :uri (% :url)
                  :publisher (if-not (nil? (% :contact_name))

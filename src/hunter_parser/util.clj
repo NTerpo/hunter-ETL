@@ -37,7 +37,7 @@
   "create new tags from the title"
   [title]
   (vec (disj (set (-> (st/lower-case title)
-                      (st/split #" "))) "database" "db" "data" "dataset")))
+                      (st/split #" "))) "database" "db" "data" "dataset" "to" "and")))
 
 (defn extend-temporal
   "extend the temporal coverage with dates between limits"

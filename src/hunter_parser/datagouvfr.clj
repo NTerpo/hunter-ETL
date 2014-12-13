@@ -13,6 +13,11 @@
   (vec (mapcat geo-tagify
                (vec (map #(st/lower-case (get-in % [:name])) territories)))))
 
+(defn clean-resources
+  ""
+  [coll]
+  (vec (map #(select-keys % [:title :format :url]) coll)))
+
 (defn get-datagouvfr-ds
   "gets a number of the most popular datasets' metadata from the API of data.gouv.fr and transforms them to match the Hunter API scheme"
   [number]
@@ -41,8 +46,9 @@
                             (get-in % [:resources 0 :created_at])
                             (% :last_modified))
                  :updated (% :last_modified)
+                 :resources (clean-resources (% :resources))
                  :huntscore (calculate-huntscore (get-in % [:metrics :reuses])
                                                  (get-in % [:metrics :views])
                                                  0
                                                  (get-in % [:metrics :followers]))))
-         (map #(dissoc % :organization :temporal_coverage :page :resources :metrics :last_modified)))))
+         (map #(dissoc % :organization :temporal_coverage :page :metrics :last_modified)))))

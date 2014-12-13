@@ -19,6 +19,12 @@
                 (map #(hash-map (keyword (% :key)) (% :value))
                      (map #(select-keys % [:key :value]) vect))))))
 
+(defn clean-resources
+  ""
+  [coll title]
+  (vec (->> (map #(select-keys % [:format :url]) coll)
+            (map #(assoc % :title title)))))
+
 (defn get-datagov-ds
   "gets a number of the most popular datasets' metadata from the ckan API of data.gov and transforms them to match the Hunter API scheme"
   [number offset]
@@ -46,9 +52,10 @@
                  :description (if-not (nil? (% :notes))
                                 (% :notes)
                                 (% :title))
+                 :resources (clean-resources (% :resources) (% :title))
                  :huntscore (calculate-huntscore 0
                                                  (get-in % [:tracking_summary :total])
                                                  (get-in % [:tracking_summary :recent])
                                                  0)))
-         (map #(dissoc % :organization :resources :extras :revision_timestamp :notes :tracking_summary)))))
+         (map #(dissoc % :organization :extras :revision_timestamp :notes :tracking_summary)))))
 

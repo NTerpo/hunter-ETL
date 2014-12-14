@@ -19,6 +19,15 @@
   [vect]
   (vec (map #(% :name) vect)))
 
+(defn clean-resources
+  ""
+  [coll title]
+  (vec (->> (filter #(not (nil? (re-find #"Download dataset in" (% :description)))) coll)
+            (map #(select-keys % [:url :description]))
+            (map #(assoc % :format (nth (st/split (% :description) #" ") 3)))
+            (map #(assoc % :title title))
+            (map #(dissoc % :description)))))
+
 (defn get-europa-opendata-ds
   "gets a number of the most popular datasets' metadata from the Europa Open Data API  and transforms them to match the Hunter API scheme"
   []
@@ -52,6 +61,7 @@
                                (if-not (empty? (% :modified_date))
                             (read-string (% :modified_date))
                             (% :metadata_created)))
+                 :resources (clean-resources (% :resources) (% :title))
                  :huntscore (calculate-huntscore 5 0 0 0)))
-         (map #(dissoc % :temporal_coverage_from :temporal_coverage_to :keywords :contact_name :url :geographical_coverage :modified_date :resources :metadata_created)))))
+         (map #(dissoc % :temporal_coverage_from :temporal_coverage_to :keywords :contact_name :url :geographical_coverage :modified_date :metadata_created)))))
 

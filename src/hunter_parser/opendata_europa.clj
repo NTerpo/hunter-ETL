@@ -19,12 +19,24 @@
   [vect]
   (vec (map #(% :name) vect)))
 
+(defn clean-resource-url [url]
+  (let [url-v (st/split url #"BulkDownloadListing")
+        bulk "BulkDownloadListing?"
+        pre (first url-v)
+        new-pre "http://ec.europa.eu/eurostat/estat-navtree-portlet-prod/"
+        suff (last url-v)]
+    (if (= "http://epp.eurostat.ec.europa.eu/NavTree_prod/everybody/"
+             pre)
+      (str new-pre bulk suff)
+      url)))
+
 (defn clean-resources
   ""
   [coll title]
   (vec (->> (filter #(not (nil? (re-find #"Download dataset in" (% :description)))) coll)
             (map #(select-keys % [:url :description]))
             (map #(assoc % :format (nth (st/split (% :description) #" ") 3)))
+            (map #(assoc % :url (clean-resource-url (% :url))))
             (map #(assoc % :title title))
             (map #(dissoc % :description)))))
 

@@ -21,7 +21,7 @@
 (defn get-datagouvfr-ds
   "gets a number of the most popular datasets' metadata from the API of data.gouv.fr and transforms them to match the Hunter API scheme"
   [number]
-  (let [response ((parse-string (:body (client/get (str base-url "datasets/?sort=-reuses"
+  (let [response ((parse-string (:body (client/get (str base-url "datasets/?q=addiction&sort=-reuses"
                                                          "&page_size=" number))) true) :data)]
     (->> (map #(select-keys % [:title :page :description :last_modified :organization :spatial :tags :temporal_coverage :resources :metrics]) response)
          (map #(assoc %

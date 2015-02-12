@@ -49,10 +49,11 @@
                             [:title :notes :organization :resources :tags :tracking_summary :temporal_coverage-to
                              :metadata_created :metadata_modified :temporal_coverage-from :geographic_coverage :url]))
          (map #(assoc %
-                 :description (if-not (nil? (% :notes))
+                 :description (if-not (or (empty? (% :notes))
+                                          (= " " (% :notes)))
                                 (% :notes)
                                 (% :title))
-                 :uri (if-not (nil? (% :url))
+                 :uri (if-not (empty? (% :url))
                         (% :url)
                         "URI Not Available")
                  :publisher (get-in % [:organization :title])
@@ -63,16 +64,15 @@
                             (geo-tagify "uk")) 
                  :temporal (if-not (and (empty? (% :temporal_coverage-from))
                                         (empty? (% :temporal_coverage-to)))
-                             (extend-temporal (str (% :temporal_coverage-from) "/"                                                                            (% :temporal_coverage-to)))
+                             (extend-temporal (str (% :temporal_coverage-from) "/" (% :temporal_coverage-to)))
                              (get-resource-temporal (% :resources)))
                  :tags (vec (concat (tagify-title (% :title))
                                     (extend-tags (get-tags (% :tags)))))
                  :resources (clean-resources (% :resources) (% :title))
-                 :huntscore (calculate-huntscore 0 ; TODO: find a way
-                                        ; to give a score
+                 :huntscore (calculate-huntscore 5 
                                                  (get-in % [:tracking_summary :total])
                                                  (get-in % [:tracking_summary :recent])
-                                                 0)))
+                                                 0))); TODO: find a way to give a score
          (map #(dissoc % :notes :temporal_coverage-to :temporal_coverage-from :tracking_summary
                        :metadata_created :metadata_modified :geographic_coverage :url :organization)))))
 

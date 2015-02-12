@@ -1,8 +1,8 @@
-(ns hunter-parser.hand
+(ns hunter-etl.hand
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-parser.util :refer :all]))
+            [hunter-etl.util :refer :all]))
 
 (defn create-ds
   "create a hunter dataset by hand

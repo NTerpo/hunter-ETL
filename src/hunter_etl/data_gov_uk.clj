@@ -1,8 +1,8 @@
-(ns hunter-parser.datagovuk
+(ns hunter-etl.data-gov-uk
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-parser.util :refer :all]))
+            [hunter-etl.util :refer :all]))
 
 (def base-url "http://data.gov.uk/api/3/")
 

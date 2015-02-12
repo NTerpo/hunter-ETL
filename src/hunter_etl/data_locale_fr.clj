@@ -1,8 +1,8 @@
-(ns hunter-parser.datalocale
+(ns hunter-etl.data-locale-fr
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-parser.util :refer :all]))
+            [hunter-etl.util :refer :all]))
 
 (defn get-datalocale-ds
   "gets all datasets' metadata from the ckan API of datalocale.fr and transforms them to match the Hunter API scheme"

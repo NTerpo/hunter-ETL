@@ -1,6 +1,6 @@
-(ns hunter-parser.core
+(ns hunter-etl.core
   (:use [clojure.data :refer :all])
-  (:require [hunter-parser.util :refer :all]))
+  (:require [hunter-etl.util :refer :all]))
 
 (defn extract-from-ckan
   ([base-api] (extract-from-ckan base-api 1 0 ""))
@@ -55,3 +55,8 @@
   (-> (uk-extract number offset request)
       uk-transform
       #_uk-load))
+
+(defn -main
+  ""
+  []
+  (println "Hunter ETL"))

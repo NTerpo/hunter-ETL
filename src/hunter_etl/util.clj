@@ -1,4 +1,4 @@
-(ns hunter-parser.util
+(ns hunter-etl.util
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]))

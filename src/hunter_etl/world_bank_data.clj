@@ -1,8 +1,8 @@
-(ns hunter-parser.worldbankdata
+(ns hunter-etl.world-bank-data
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-parser.util :refer :all]))
+            [hunter-etl.util :refer :all]))
 
 (def base-url "http://api.worldbank.org/v2/datacatalog?format=json&per_page=120")
 

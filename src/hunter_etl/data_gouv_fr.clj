@@ -1,8 +1,8 @@
-(ns hunter-parser.datagouvfr
+(ns hunter-etl.data-gouv-fr
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-parser.util :refer :all]))
+            [hunter-etl.util :refer :all]))
 
 (def base-url "http://www.data.gouv.fr/api/1/")
 ;; (def api-key "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiNTM3MDBiYzFhM2E3Mjk0NjAwNDM1ZmJkIiwidGltZSI6MTQxNTYyODcyMi40NzQ3NzZ9.MLofKql5iK7JR1LdfQZfUxjYjA194i5gfIbIe0IZM1Q")

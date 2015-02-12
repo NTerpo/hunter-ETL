@@ -1,8 +1,8 @@
-(ns hunter-parser.opendata-europa
+(ns hunter-etl.opendata-europa
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-parser.util :refer :all]))
+            [hunter-etl.util :refer :all]))
 
 (def base-url "http://open-data.europa.eu/data/api/action/package_search")
 

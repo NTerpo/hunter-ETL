@@ -17,11 +17,12 @@
   "extend the spatial coverage tagging 'us'->'america'->'countries'->'world'"
   [geo]
   (let [geo (clojure.string/lower-case geo)]
-    (if-not (nil? (some #{geo} ["france" "us" "europe" "world"]))
+    (if-not (nil? (some #{geo} ["france" "us" "europe" "world" "uk"]))
       ({"france" ["france" "fr" "europe" "schengen" "eu" "ue" "countries" "world" "all"]
         "us" ["us" "usa" "america" "united states" "united-states" "united states of america" "united-states-of-america" "world" "countries" "all"]
         "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]
-        "world" ["world" "all" "countries"]} geo)
+        "world" ["world" "all" "countries"]
+        "uk" ["uk" "england" "scotland" "wales" "ireland" "great-britain" "gb"]} geo)
       (vector geo))))
 
 (defn extend-tags

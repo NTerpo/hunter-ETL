@@ -26,6 +26,14 @@
       (extend-temporal (str from "/" to))
       "all")))
 
+(defn published?
+  [m]
+  (= "false" (get-in m [:unpublished])))
+
+(defn resources?
+  [m]
+  (not (empty? (get-in m [:resources]))))
+
 (defn get-datagov-uk-ds
   "gets a number of the most popular datasets' metadata from the ckan API of data.gov.uk and transforms them to match the Hunter API scheme"
   [number offset]
@@ -34,8 +42,12 @@
                                     "&start=" offset))
                    :result)
                   :results)]
-    (->> (map #(select-keys % [:title :notes :organization :resources :tags :tracking_summary :temporal_coverage-to
-                               :metadata_created :metadata_modified :temporal_coverage-from :geographic_coverage :url]) response)
+    
+    (->> (filter published? response)
+         (filter resources?)
+         (map #(select-keys %
+                            [:title :notes :organization :resources :tags :tracking_summary :temporal_coverage-to
+                             :metadata_created :metadata_modified :temporal_coverage-from :geographic_coverage :url]))
          (map #(assoc %
                  :description (if-not (nil? (% :notes))
                                 (% :notes)
@@ -44,14 +56,16 @@
                         (% :url)
                         "URI Not Available")
                  :publisher (get-in % [:organization :title])
-                 :created (% :metadata_created) ; TODO: check nil
-                 :updated (% :metadata_modified) ; TODO: check nil
-                 :spatial (geo-tagify "uk") ; TODO: expend UK
+                 :created (% :metadata_created) 
+                 :updated (% :metadata_modified)
+                 :spatial (if-not (empty? (% :geographic_coverage))
+                            (% :geographic_coverage)
+                            (geo-tagify "uk")) 
                  :temporal (if-not (and (empty? (% :temporal_coverage-from))
                                         (empty? (% :temporal_coverage-to)))
                              (extend-temporal (str (% :temporal_coverage-from) "/"                                                                            (% :temporal_coverage-to)))
                              (get-resource-temporal (% :resources)))
-                 :tags (vec (concat (tagify-title (% :title)) ; TODO: check nil
+                 :tags (vec (concat (tagify-title (% :title))
                                     (extend-tags (get-tags (% :tags)))))
                  :resources (clean-resources (% :resources) (% :title))
                  :huntscore (calculate-huntscore 0 ; TODO: find a way

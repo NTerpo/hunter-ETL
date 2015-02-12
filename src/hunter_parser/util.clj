@@ -45,12 +45,14 @@
   "extend the temporal coverage with dates between limits"
   [temporal]
   (let [limits (re-seq #"[0-9]{4}" temporal)]
-    (if (= 1 (count limits))
-      (vec limits)
-      (vec
-       (map str
-            (range (Integer. (first limits))
-                   (+ 1 (Integer. (last limits)))))))))
+    (if (nil? limits)
+      "all"
+      (if (= 1 (count limits))
+                        (vec limits)
+                        (vec
+                         (map str
+                              (range (Integer. (first limits))
+                                     (+ 1 (Integer. (last limits))))))))))
 
 (defn calculate-huntscore
   ""

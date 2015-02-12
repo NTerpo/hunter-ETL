@@ -15,6 +15,17 @@
   (vec (->> (map #(select-keys % [:format :url]) coll)
             (map #(assoc % :title title)))))
 
+(defn get-resource-temporal
+  [vect]
+  (let [f (first vect)
+        l (last vect)
+        from (re-seq #"[0-9]{4}" (get-in f [:description]))
+        to (re-seq #"[0-9]{4}" (get-in l [:description]))]
+    (if-not (and (empty? from)
+                 (empty? to))
+      (extend-temporal (str from "/" to))
+      "all")))
+
 (defn get-datagov-uk-ds
   "gets a number of the most popular datasets' metadata from the ckan API of data.gov.uk and transforms them to match the Hunter API scheme"
   [number offset]
@@ -36,8 +47,10 @@
                  :created (% :metadata_created) ; TODO: check nil
                  :updated (% :metadata_modified) ; TODO: check nil
                  :spatial (geo-tagify "uk") ; TODO: expend UK
-                 :temporal (extend-temporal (str (% :temporal_coverage-from) "/"
-                                                 (% :temporal_coverage-to)))
+                 :temporal (if-not (and (empty? (% :temporal_coverage-from))
+                                        (empty? (% :temporal_coverage-to)))
+                             (extend-temporal (str (% :temporal_coverage-from) "/"                                                                            (% :temporal_coverage-to)))
+                             (get-resource-temporal (% :resources)))
                  :tags (vec (concat (tagify-title (% :title)) ; TODO: check nil
                                     (extend-tags (get-tags (% :tags)))))
                  :resources (clean-resources (% :resources) (% :title))

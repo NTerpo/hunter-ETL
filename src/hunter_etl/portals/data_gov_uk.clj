@@ -1,4 +1,4 @@
-(ns hunter-etl.data-gov-uk
+(ns hunter-etl.portals.data-gov-uk
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]

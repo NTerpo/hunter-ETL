@@ -1,4 +1,4 @@
-(ns hunter-etl.world-bank-data
+(ns hunter-etl.portals.world-bank-data
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]

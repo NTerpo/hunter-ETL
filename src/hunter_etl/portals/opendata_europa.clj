@@ -1,4 +1,4 @@
-(ns hunter-etl.opendata-europa
+(ns hunter-etl.portals.opendata-europa
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]

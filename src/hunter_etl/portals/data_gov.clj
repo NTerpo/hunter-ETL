@@ -10,19 +10,19 @@
 (def dg-url "https://catalog.data.gov/api")
 
 (defn dg-extract
-  "extract data from the data.gov.uk API and clean the introduction
+  "extract data from the data.gov API and clean the introduction
   returns a collection of datasets metadata"
   [& args]
-  (apply extract-from-ckan dg-url args))
+  (apply extract-from-ckan-v3 dg-url args))
 
 ;;;; transform
 
 (defn get-created
   "try to get the created dataset date"
-  [resource revision]
+  [resource alt]
   (if-not (nil? resource)
     resource
-    revision))
+    alt))
 
 (defn clean-temporal
   "try to find the value of 'temporal' from a data.gov metadata dataset"
@@ -64,8 +64,7 @@
                  :created (get-created (get-in % [:resources 0 :created])
                                        (% :revision_timestamp))
                  :updated (% :revision_timestamp)
-                 :tags (vec (concat (tagify-title (% :title))
-                                    (extend-tags (get-tags (% :tags)))))
+                 :tags (tags-with-title (% :title) (get-tags (% :title)))
                  :spatial (geo-tagify "us") ; TODO: find the real
                                         ; spatial coverage
                  :temporal (get-temporal (% :extras))

@@ -2,53 +2,112 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-etl.util :refer :all]))
+            [hunter-etl.util :refer :all]
+            [hunter-etl.ckan :refer :all]))
 
-(def base-url "http://www.data.gouv.fr/api/1/")
-;; (def api-key "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiNTM3MDBiYzFhM2E3Mjk0NjAwNDM1ZmJkIiwidGltZSI6MTQxNTYyODcyMi40NzQ3NzZ9.MLofKql5iK7JR1LdfQZfUxjYjA194i5gfIbIe0IZM1Q")
+;;;; extract
+
+(def dgf-url "http://www.data.gouv.fr/api")
+
+(defn dgf-extract
+  "extract data from the data.gouv.fr API and clean the introduction
+  returns a collection of datasets metadata"
+  [& args]
+  (apply extract-from-ckan-v1 dgf-url args))
+
+;;;; transform
+
+(defn get-publisher
+  "get the publisher and returns data.gouv.fr if it isn't available"
+  [publisher]
+  (if-not (nil? publisher)
+    publisher
+    "data.gouv.fr"))
+
+(defn get-created
+  "try to get the created dataset date"
+  [resource alt]
+  (if-not (nil? resource)
+    resource
+    alt))
 
 (defn get-spatial
-  ""
+  "parses a collection of territories"
   [territories]
   (vec (mapcat geo-tagify
                (vec (map #(st/lower-case (get-in % [:name])) territories)))))
 
-(defn clean-resources
-  ""
+(defn clean-spatial
+  "returns the geographic coverage if available"
+  [geo]
+  (if-not (empty? (get-spatial geo)) geo (geo-tagify "france")))
+
+(defn get-temporal
+  "returns, if available the temporal coverage
+  If it's not possible it try to find the temporal
+  coverage from the resources"
+  [from to]
+  (if (and (not-empty from)
+           (not-empty to))
+    (extend-temporal (str from "/" to))
+    "all"))
+
+(defn filter-resources
+  "returns a vector of resources limited to format, url and title"
   [coll]
   (vec (map #(select-keys % [:title :format :url]) coll)))
 
-(defn get-datagouvfr-ds
-  "gets a number of the most popular datasets' metadata from the API of data.gouv.fr and transforms them to match the Hunter API scheme"
-  [number]
-  (let [response ((parse-string (:body (client/get (str base-url "datasets/?q=addiction&sort=-reuses"
-                                                         "&page_size=" number))) true) :data)]
-    (->> (map #(select-keys % [:title :page :description :last_modified :organization :spatial :tags :temporal_coverage :resources :metrics]) response)
+(defn dgf-transform
+  "pipeline to transform the collection received from the API
+  and make it meet the Hunter API scheme.
+
+  Are needed the following keys:
+  :title :description :publisher :uri :created :updated :spatial
+  :temporal :tags :resources :huntscore
+
+  First the collection is filtered with booleans
+  Then the Hunter keys are created from existent keys
+  And, finally, the other keys are removed"
+  [coll]
+  (let [ks [:title :page :description :last_modified :organization
+            :spatial :tags :temporal_coverage :resources :metrics]
+        nks (not-hunter-keys ks)]
+
+    (->> coll
+         (map #(select-keys % ks))
          (map #(assoc %
-                 :uri (% :page)
-                 :publisher (if-not (nil? (get-in % [:organization :name]))
-                              (get-in % [:organization :name])
-                              "data.gouv.fr")
-                 :spatial (if-not (empty? (get-spatial (get-in % [:spatial :territories])))
-                            (get-spatial (get-in % [:spatial :territories]))
-                            (geo-tagify "france"))
-                 :tags (vec (concat (tagify-title (% :title))
-                                    (extend-tags (% :tags))))
-                 :description (if-not (empty? (% :description))
-                                (% :description)
-                                (% :title))
-                 :temporal (if-not (empty? (% :temporal_coverage))
-                             (extend-temporal (str (get-in % [:temporal_coverage :start])
-                                                   "/"
-                                                   (get-in % [:temporal_coverage :end])))
-                             "all")
-                 :created (if-not (nil? (get-in % [:resources 0 :created_at]))
-                            (get-in % [:resources 0 :created_at])
-                            (% :last_modified))
+                 :description (notes->description (% :description) (% :title))
+                 :publisher (get-publisher (get-in % [:organization :name]))
+                 :uri (url->uri (% :page))
+                 :created (get-created (get-in % [:resources 0 :created_at])
+                                       (% :last_modified))
                  :updated (% :last_modified)
-                 :resources (clean-resources (% :resources))
-                 :huntscore (calculate-huntscore (get-in % [:metrics :reuses])
-                                                 (get-in % [:metrics :views])
-                                                 0
-                                                 (get-in % [:metrics :followers]))))
-         (map #(dissoc % :organization :temporal_coverage :page :metrics :last_modified)))))
+                 :spatial (clean-spatial (get-in % [:spatial :territories]))
+                 :temporal (get-temporal (get-in % [:temporal_coverage :start])
+                                         (get-in % [:temporal_coverage :end]))
+                 :tags (tags-with-title (% :title) (% :tags))
+                 :resources (filter-resources (% :resources))
+                 :huntscore (calculate-huntscore
+                             (get-in % [:metrics :reuses])
+                             (get-in % [:metrics :views])
+                             0
+                             (get-in % [:metrics :followers]))))
+         (map #(apply dissoc % nks)))))
+
+;;;; load
+
+(defn dgf-etl
+  "data.gouv.fr ETL
+  takes between 0 and 3 arguments :
+  ([integer][integer][string])
+  
+  0 => loads in the Hunter DB the most popular dgu dataset cleaned
+  1 => loads in the Hunter DB the given number of dgu datasets cleaned
+  2 => same with an offset
+  3 => same but only with datasets corresponding to a query
+
+  With a number argument too big - eg 1000 - gets a HTTP 500 from the API"
+  [& args]
+  (-> (apply dgf-extract args)
+      dgf-transform
+      load-to-hunter-api))

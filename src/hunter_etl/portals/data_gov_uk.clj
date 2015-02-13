@@ -13,7 +13,7 @@
   "extract data from the data.gov.uk API and clean the introduction
   returns a collection of datasets metadata"
   [& args]
-  (apply extract-from-ckan dguk-url args))
+  (apply extract-from-ckan-v3 dguk-url args))
 
 ;;;; transform
 
@@ -92,8 +92,7 @@
                  :temporal (get-temporal (% :temporal_coverage_from)
                                          (% :temporal_coverage_to)
                                          (% :resources))
-                 :tags (vec (concat (tagify-title (% :title))
-                                    (extend-tags (get-tags (% :tags)))))
+                 :tags (tags-with-title (% :title) (get-tags (% :title)))
                  :resources (clean-resources (% :resources) (% :title))
                  :huntscore (calculate-huntscore
                              5 

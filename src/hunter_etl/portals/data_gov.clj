@@ -65,8 +65,7 @@
                                        (% :revision_timestamp))
                  :updated (% :revision_timestamp)
                  :tags (tags-with-title (% :title) (get-tags (% :tags)))
-                 :spatial (geo-tagify "us") ; TODO: find the real
-                                        ; spatial coverage
+                 :spatial (geo-tagify "us")
                  :temporal (get-temporal (% :extras))
                  :resources (clean-resources (% :resources) (% :title))
                  :huntscore (calculate-huntscore

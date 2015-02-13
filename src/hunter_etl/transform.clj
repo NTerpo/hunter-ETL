@@ -88,11 +88,53 @@
                      {:body (generate-string %)
                       :content-type "application/json"}) coll))
 
+;;;; Transformation Macro
+
+(defmacro deftransform
+  ""
+  [name keys]
+  (cons 'defn
+        `(~name ""
+                [coll#]
+                (let [ks# ~keys
+                      nks# (not-hunter-keys ks#)]
+                  (->> coll#
+                       (map #(select-keys % ks#)))))))
+
 ;;;; By Hand Datasets
 
 (defn create-ds
   "create a hunter dataset by hand
-  eg. (create-ds \"Global Bilateral Migration Database\" \"Global matrices of bilateral migrant stocks spanning the period 1960-2000, disaggregated by gender and based primarily on the foreign-born concept are presented. Over one thousand census and population register records are combined to construct decennial matrices corresponding to the last five completed census rounds.\\n\\nFor the first time, a comprehensive picture of bilateral global migration over the last half of the twentieth century emerges. The data reveal that the global migrant stock increased from 92 to 165 million between 1960 and 2000. South-North migration is the fastest growing component of international migration in both absolute and relative terms. The United States remains the most important migrant destination in the world, home to one fifth of the world’s migrants and the top destination for migrants from no less than sixty sending countries. Migration to Western Europe remains largely from elsewhere in Europe. The oil-rich Persian Gulf countries emerge as important destinations for migrants from the Middle East, North Africa and South and South-East Asia. Finally, although the global migrant stock is still predominantly male, the proportion of women increased noticeably between 1960 and 2000.\" \"World Bank\" \"http://databank.worldbank.org/data/views/variableselection/selectvariables.aspx?source=global-bilateral-migration\" [\"World\" \"East Asia & Pacific\" \"Europe\" \" Asia\" \"Latin America\" \"Caribbean\" \"Middle East\" \"North Africa\" \"South Asia\" \"Sub Saharan\" \"Africa\"] \"1960 - 2000\" [\"migrants\" \"immigration\"] \"2011-07-01T00:00:00.000000\" \"2011-07-01T00:00:00.000000\" [] 5 0)"
+  eg. (create-ds \"Global Bilateral Migration Database\"
+  \"Global matrices of bilateral migrant stocks spanning
+  the period 1960-2000, disaggregated by gender and based
+  primarily on the foreign-born concept are presented.
+  Over one thousand census and population register records
+  are combined to construct decennial matrices corresponding
+  to the last five completed census rounds.\\n\\nFor the
+  first time, a comprehensive picture of bilateral global
+  migration over the last half of the twentieth century
+  emerges. The data reveal that the global migrant stock
+  increased from 92 to 165 million between 1960 and 2000
+  . South-North migration is the fastest growing component
+  of international migration in both absolute and relative
+  terms. The United States remains the most important migrant
+  destination in the world, home to one fifth of the world’s
+  migrants and the top destination for migrants from no less
+  than sixty sending countries. Migration to Western Europe
+  remains largely from elsewhere in Europe. The oil-rich
+  Persian Gulf countries emerge as important destinations
+  for migrants from the Middle East, North Africa and
+  South and South-East Asia. Finally, although the global
+  migrant stock is still predominantly male, the proportion
+  of women increased noticeably between 1960 and 2000.\"
+  \"World Bank\" \"http://databank.worldbank.org/data/views/
+  variableselection/selectvariables.aspx?source=global-bilateral
+  -migration\" [\"World\" \"East Asia & Pacific\" \"Europe\" \"
+  Asia\" \"Latin America\" \"Caribbean\" \"Middle East\" \"North
+  Africa\" \"South Asia\" \"Sub Saharan\" \"Africa\"] \"1960 - 2000\"
+  [\"migrants\" \"immigration\"] \"2011-07-01T00:00:00.000000\"
+  \"2011-07-01T00:00:00.000000\" [] 5 0)"
   [title description publisher uri spatial temporal tags created updated resources reuses views]
   (list {:title title
          :description description

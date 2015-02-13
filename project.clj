@@ -1,4 +1,4 @@
-(defproject hunter-etl "0.2.0-SNAPSHOT"
+(defproject hunter-etl "0.3.0-SNAPSHOT"
   :description "ETL for the Hunter API"
   :url "https://github.com/NTerpo/hunter-ETL"
   :license {:name "Eclipse Public License"

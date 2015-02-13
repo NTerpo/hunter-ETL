@@ -3,9 +3,9 @@
             [cheshire.core :refer :all]
             [clojure.string :as st]
             [hunter-etl.util :refer :all]
-            [hunter-etl.ckan :refer [extract-from-ckan]]))
+            [hunter-etl.ckan :refer :all]))
 
-;;;; EXTRACT
+;;;; extract
 
 (def dguk-url "http://data.gov.uk/api")
 
@@ -13,44 +13,16 @@
   "extract data from the data.gov.uk API and clean the introduction
   returns a collection of datasets metadata"
   [& args]
-  (apply extract-from-ckan "http://data.gov.uk/api" args))
+  (apply extract-from-ckan dguk-url args))
 
-;;;; TRANSFORM
+;;;; transform
 
 ;; transformation functions
-
-(defn url->uri
-  "returns an error string if the url is missing"
-  [url]
-  (if (not-empty url)
-    url
-    "URI Not Available"))
-
-(defn notes->description
-  "if notes are present, returns them
-  else, returns the dataset title"
-  [notes title]
-  (if (or (not-empty notes)
-          (not= " " notes))
-    notes
-    title))
-
-(defn get-tags
-  "With the CKAN API, tags are in a vector of maps.
-  Only the name of each tag is needed"
-  [vect]
-  (vec (map #(% :name) (map #(select-keys % [:name]) vect))))
 
 (defn get-spatial
   "returns the geographic coverage if available"
   [geo]
   (if (not-empty geo) geo (geo-tagify "uk")))
-
-(defn clean-resources
-  "returns a vector of resources limited to format, url and title"
-  [coll title]
-  (vec (->> (map #(select-keys % [:format :url]) coll)
-            (map #(assoc % :title title)))))
 
 (defn get-resource-temporal
   "returns, if available, the year included in the description of
@@ -130,7 +102,7 @@
                              0)))   ; TODO: find a way to give a score
          (map #(apply dissoc % nks)))))
 
-;;;; LOAD
+;;;; load
 
 (defn dguk-etl
   "data.gov.uk ETL

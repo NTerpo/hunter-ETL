@@ -93,21 +93,3 @@
                              0
                              (get-in % [:metrics :followers]))))
          (map #(apply dissoc % nks)))))
-
-;;;; load
-
-(defn dgf-etl
-  "data.gouv.fr ETL
-  takes between 0 and 3 arguments :
-  ([integer][integer][string])
-  
-  0 => loads in the Hunter DB the most popular dgu dataset cleaned
-  1 => loads in the Hunter DB the given number of dgu datasets cleaned
-  2 => same with an offset
-  3 => same but only with datasets corresponding to a query
-
-  With a number argument too big - eg 1000 - gets a HTTP 500 from the API"
-  [& args]
-  (-> (apply dgf-extract args)
-      dgf-transform
-      load-to-hunter-api))

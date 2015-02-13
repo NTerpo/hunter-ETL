@@ -64,7 +64,7 @@
                  :created (get-created (get-in % [:resources 0 :created])
                                        (% :revision_timestamp))
                  :updated (% :revision_timestamp)
-                 :tags (tags-with-title (% :title) (get-tags (% :title)))
+                 :tags (tags-with-title (% :title) (get-tags (% :tags)))
                  :spatial (geo-tagify "us") ; TODO: find the real
                                         ; spatial coverage
                  :temporal (get-temporal (% :extras))
@@ -75,20 +75,3 @@
                              (get-in % [:tracking_summary :recent])
                              0)))
          (map #(apply dissoc % nks)))))
-
-;;;; load
-
-(defn dg-etl
-  "data.gov ETL
-  takes between 0 and 3 arguments :
-  ([integer][integer][string])
-  
-  0 => loads in the Hunter DB the most popular dgu dataset cleaned
-  1 => loads in the Hunter DB the given number of dgu datasets cleaned
-  2 => same with an offset
-  3 => same but only with datasets corresponding to a query"
-  [& args]
-  (-> (apply dg-extract args)
-      dg-transform
-      load-to-hunter-api ; TODO: checker si ça load bien en base
-      ))

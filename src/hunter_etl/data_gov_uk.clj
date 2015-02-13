@@ -2,77 +2,146 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-etl.util :refer :all]))
+            [hunter-etl.util :refer :all]
+            [hunter-etl.ckan :refer [extract-from-ckan]]))
 
-(def base-url "http://data.gov.uk/api/3/")
+;;;; EXTRACT
+
+(def dguk-url "http://data.gov.uk/api")
+
+(defn dguk-extract
+  "extract data from the data.gov.uk API and clean the introduction
+  returns a collection of datasets metadata"
+  [& args]
+  (apply extract-from-ckan "http://data.gov.uk/api" args))
+
+;;;; TRANSFORM
+
+;; transformation functions
+
+(defn url->uri
+  "returns an error string if the url is missing"
+  [url]
+  (if (not-empty url)
+    url
+    "URI Not Available"))
+
+(defn notes->description
+  "if notes are present, returns them
+  else, returns the dataset title"
+  [notes title]
+  (if (or (not-empty notes)
+          (not= " " notes))
+    notes
+    title))
 
 (defn get-tags
+  "With the CKAN API, tags are in a vector of maps.
+  Only the name of each tag is needed"
   [vect]
   (vec (map #(% :name) (map #(select-keys % [:name]) vect))))
 
+(defn get-spatial
+  "returns the geographic coverage if available"
+  [geo]
+  (if (not-empty geo) geo (geo-tagify "uk")))
+
 (defn clean-resources
+  "returns a vector of resources limited to format, url and title"
   [coll title]
   (vec (->> (map #(select-keys % [:format :url]) coll)
             (map #(assoc % :title title)))))
 
 (defn get-resource-temporal
+  "returns, if available, the year included in the description of
+  the first and last resources and extend them"
   [vect]
   (let [f (first vect)
         l (last vect)
         from (re-seq #"[0-9]{4}" (get-in f [:description]))
         to (re-seq #"[0-9]{4}" (get-in l [:description]))]
-    (if-not (and (empty? from)
-                 (empty? to))
+    (if (and (not-empty from)
+             (not-empty to))
       (extend-temporal (str from "/" to))
       "all")))
 
+(defn get-temporal
+  "returns, if available the temporal coverage
+  If it's not possible it try to find the temporal
+  coverage from the resources"
+  [from to resources]
+  (if (and (not-empty from)
+           (not-empty to))
+    (extend-temporal (str from "/" to))
+    (get-resource-temporal resources)))
+
+;; booleans to filter unuseful datasets
+
 (defn published?
+  "checks the unpublished key to filter not relevant datasets"
   [m]
   (= "false" (get-in m [:unpublished])))
 
 (defn resources?
+  "checkes if there are resources"
   [m]
   (not (empty? (get-in m [:resources]))))
 
-(defn get-datagov-uk-ds
-  "gets a number of the most popular datasets' metadata from the ckan API of data.gov.uk and transforms them to match the Hunter API scheme"
-  [number offset]
-  (let [response (((get-result (str base-url "action/package_search?q="
-                                    "&rows=" number
-                                    "&start=" offset))
-                   :result)
-                  :results)]
-    
-    (->> (filter published? response)
+;; transform 
+
+(defn dguk-transform
+  "pipeline to transform the collection received from the API
+  and make it meet the Hunter API scheme.
+
+  Are needed the following keys:
+  :title :description :publisher :uri :created :updated :spatial
+  :temporal :tags :resources :huntscore
+
+  First the collection is filtered with booleans
+  Then the Hunter keys are created from existent keys
+  And, finally, the other keys are removed"
+  [coll]
+  (let [ks [:title :notes :organization :resources :tracking_summary
+            :temporal_coverage-to :metadata_created :metadata_modified
+            :temporal_coverage-from :geographic_coverage :url :tags]
+        nks (not-hunter-keys ks)]
+
+    (->> coll
+         (filter published?)
          (filter resources?)
-         (map #(select-keys %
-                            [:title :notes :organization :resources :tags :tracking_summary :temporal_coverage-to
-                             :metadata_created :metadata_modified :temporal_coverage-from :geographic_coverage :url]))
+         (map #(select-keys % ks))
          (map #(assoc %
-                 :description (if-not (or (empty? (% :notes))
-                                          (= " " (% :notes)))
-                                (% :notes)
-                                (% :title))
-                 :uri (if-not (empty? (% :url))
-                        (% :url)
-                        "URI Not Available")
+                 :description (notes->description (% :notes) (% :title))
                  :publisher (get-in % [:organization :title])
+                 :uri (url->uri (% :url))
                  :created (% :metadata_created) 
                  :updated (% :metadata_modified)
-                 :spatial (if-not (empty? (% :geographic_coverage))
-                            (% :geographic_coverage)
-                            (geo-tagify "uk")) 
-                 :temporal (if-not (and (empty? (% :temporal_coverage-from))
-                                        (empty? (% :temporal_coverage-to)))
-                             (extend-temporal (str (% :temporal_coverage-from) "/" (% :temporal_coverage-to)))
-                             (get-resource-temporal (% :resources)))
+                 :spatial (get-spatial (% :geographic_coverage)) 
+                 :temporal (get-temporal (% :temporal_coverage_from)
+                                         (% :temporal_coverage_to)
+                                         (% :resources))
                  :tags (vec (concat (tagify-title (% :title))
                                     (extend-tags (get-tags (% :tags)))))
                  :resources (clean-resources (% :resources) (% :title))
-                 :huntscore (calculate-huntscore 5 
-                                                 (get-in % [:tracking_summary :total])
-                                                 (get-in % [:tracking_summary :recent])
-                                                 0))); TODO: find a way to give a score
-         (map #(dissoc % :notes :temporal_coverage-to :temporal_coverage-from :tracking_summary
-                       :metadata_created :metadata_modified :geographic_coverage :url :organization)))))
+                 :huntscore (calculate-huntscore
+                             5 
+                             (get-in % [:tracking_summary :total])
+                             (get-in % [:tracking_summary :recent])
+                             0)))   ; TODO: find a way to give a score
+         (map #(apply dissoc % nks)))))
 
+;;;; LOAD
+
+(defn dguk-etl
+  "data.gov.uk ETL
+  takes between 0 and 3 arguments :
+  ([integer][integer][string])
+  
+  0 => loads in the Hunter DB the most popular dgu dataset cleaned
+  1 => loads in the Hunter DB the given number of dgu datasets cleaned
+  2 => same with an offset
+  3 => same but only with datasets corresponding to a query"
+  [& args]
+  (-> (apply dguk-extract args)
+      dguk-transform
+      load-to-hunter-api))

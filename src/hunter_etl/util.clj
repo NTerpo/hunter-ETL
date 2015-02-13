@@ -1,17 +1,31 @@
 (ns hunter-etl.util
+  (:use [clojure.data :refer :all])
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]))
 
-(def api-url "http://localhost:3000/api/datasets")
+;;;; Extract
 
 (defn get-result
-  "gets a dataset metadata and provides a first basic filter"
+  "gets metadata from an API and provides a first basic filter"
   [url]
   (-> url
       (client/get)
       :body
       (parse-string true)))
+
+;;;; Transform
+
+(def hunter-keys
+  "keys needed in the Hunter API"
+  [:title :description :publisher :uri :created :updated :spatial :temporal :tags :resources :huntscore])
+
+(defn not-hunter-keys
+  "keys on a collection that are not on the hunter-keys"
+  [vect]
+  (vec
+   (second
+    (diff (set hunter-keys) (set vect)))))
 
 (defn geo-tagify
   "extend the spatial coverage tagging 'us'->'america'->'countries'->'world'"
@@ -56,18 +70,18 @@
                                      (+ 1 (Integer. (last limits))))))))))
 
 (defn calculate-huntscore
-  ""
+  "returns the sum of reuses, views/1000 recent-views/200 and followers/10"
   [reuses total-views recent-views followers]
   (reduce + [(* 1 reuses)
              (* 0.001 total-views)
              (* 0.005 recent-views)
              (* 0.1 followers)]))
 
-;;
-;; Export
-;;
+;;;; Load
 
-(defn export-datasets-to-hunter-api
+(def api-url "http://localhost:3000/api/datasets")
+
+(defn load-to-hunter-api
   "Send each dataset to the Hunter API via method post"
   [coll]
   (map #(client/post api-url

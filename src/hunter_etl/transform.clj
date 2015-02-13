@@ -92,14 +92,16 @@
 
 (defmacro deftransform
   ""
-  [name keys]
+  [name keys & forms]
   (cons 'defn
         `(~name ""
                 [coll#]
                 (let [ks# ~keys
                       nks# (not-hunter-keys ks#)]
                   (->> coll#
-                       (map #(select-keys % ks#)))))))
+                       (map #(select-keys % ks#))
+                       (map #(assoc % ~@forms))
+                       (map #(apply dissoc % nks#)))))))
 
 ;;;; By Hand Datasets
 

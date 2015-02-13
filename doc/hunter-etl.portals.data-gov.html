@@ -7,7 +7,7 @@ takes between 0 and 3 arguments :
 0 =&gt; loads in the Hunter DB the most popular dgu dataset cleaned
 1 =&gt; loads in the Hunter DB the given number of dgu datasets cleaned
 2 =&gt; same with an offset
-3 =&gt; same but only with datasets corresponding to a query</pre></div></div><div class="public anchor" id="var-dg-extract"><h3>dg-extract</h3><div class="usage"><code>(dg-extract &amp; args)</code></div><div class="doc"><pre class="plaintext">extract data from the data.gov.uk API and clean the introduction
+3 =&gt; same but only with datasets corresponding to a query</pre></div></div><div class="public anchor" id="var-dg-extract"><h3>dg-extract</h3><div class="usage"><code>(dg-extract &amp; args)</code></div><div class="doc"><pre class="plaintext">extract data from the data.gov API and clean the introduction
 returns a collection of datasets metadata</pre></div></div><div class="public anchor" id="var-dg-transform"><h3>dg-transform</h3><div class="usage"><code>(dg-transform coll)</code></div><div class="doc"><pre class="plaintext">pipeline to transform the collection received from the API
 and make it meet the Hunter API scheme.
 
@@ -17,6 +17,6 @@ Are needed the following keys:
 
 First the collection is filtered with booleans
 Then the Hunter keys are created from existent keys
-And, finally, the other keys are removed</pre></div></div><div class="public anchor" id="var-dg-url"><h3>dg-url</h3><div class="usage"></div><div class="doc"><pre class="plaintext"></pre></div></div><div class="public anchor" id="var-get-created"><h3>get-created</h3><div class="usage"><code>(get-created resource revision)</code></div><div class="doc"><pre class="plaintext">try to get the created dataset date
+And, finally, the other keys are removed</pre></div></div><div class="public anchor" id="var-dg-url"><h3>dg-url</h3><div class="usage"></div><div class="doc"><pre class="plaintext"></pre></div></div><div class="public anchor" id="var-get-created"><h3>get-created</h3><div class="usage"><code>(get-created resource alt)</code></div><div class="doc"><pre class="plaintext">try to get the created dataset date
 </pre></div></div><div class="public anchor" id="var-get-temporal"><h3>get-temporal</h3><div class="usage"><code>(get-temporal extras)</code></div><div class="doc"><pre class="plaintext">if possible, returns the extended vector of the cleaned temporal
 </pre></div></div></div></body></html>

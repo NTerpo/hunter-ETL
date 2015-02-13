@@ -1,5 +1,5 @@
 (ns hunter-etl.ckan
-  (:require [hunter-etl.util :refer :all]))
+  (:require [hunter-etl.transform :refer :all]))
 
 ;;;; Basic transformation function used with CKAN API ETL
 

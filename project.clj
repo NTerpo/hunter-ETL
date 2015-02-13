@@ -6,4 +6,5 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [clj-http "1.0.1"]
                  [cheshire "5.3.1"]]
-  :plugins [[codox "0.8.10"]])
+  :plugins [[codox "0.8.10"]]
+  :main hunter-etl.core)

@@ -2,7 +2,7 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-etl.util :refer :all]
+            [hunter-etl.transform :refer :all]
             [hunter-etl.ckan :refer :all]))
 
 ;;;; extract

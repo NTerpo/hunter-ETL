@@ -1,5 +1,5 @@
 (ns hunter-etl.core
-  (:require [hunter-etl.util :refer [load-to-hunter-api]]
+  (:require [hunter-etl.transform :refer [load-to-hunter-api]]
             [hunter-etl.portals.data-gov :refer [dg-extract dg-transform]]
             [hunter-etl.portals.data-gouv-fr :refer [dgf-extract dgf-transform]]
             [hunter-etl.portals.data-gov-uk :refer [dguk-extract dguk-transform]]))

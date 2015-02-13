@@ -2,7 +2,7 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-etl.util :refer :all]))
+            [hunter-etl.transform :refer :all]))
 
 (def base-url "http://api.worldbank.org/v2/datacatalog?format=json&per_page=120")
 

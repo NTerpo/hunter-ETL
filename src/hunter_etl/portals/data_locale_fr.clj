@@ -2,7 +2,7 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-etl.util :refer :all]))
+            [hunter-etl.transform :refer :all]))
 
 (defn get-datalocale-ds
   "gets all datasets' metadata from the ckan API of datalocale.fr and transforms them to match the Hunter API scheme"

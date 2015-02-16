@@ -90,6 +90,15 @@
 
 ;;;; Transformation Macro
 
+(defmacro map-get-in
+  "Given a map and a vector of key [f :key1 :key2]
+  returns (f (get-in map [:key1]) (get-in map [:key2]))
+
+  Used in the deftransform macro to avoid redundancy"
+  [m coll]
+  (let [args# `(map #(get-in ~m [%]) (rest ~coll))]
+    (list apply `(first ~coll) args#)))
+
 (defmacro deftransform
   "Define a function that transform a collection of
   dataset's metadata to make it meet the Hunter API
@@ -125,24 +134,16 @@
                        (map #(select-keys % ks#))
                        (map #(assoc %
                                :description (map-get-in % description-t#)
-                               ;; ((first description-t#)
-                               ;;  (get-in % [(nth (rest description-t#) 0)])
-                               ;;  (get-in % [(nth (rest description-t#) 1)]))
-                               ;; :publisher ((first publisher-t#)
-                               ;;               (get-in % [(nth (rest publisher-t#) 0)])
-                               ;;               (get-in % [(nth (rest publisher-t#) 1)]))
-                               ))
-                       (map #(apply dissoc % nks#)))
-                  ))))
-
-(defmacro map-get-in
-  ""
-  [m coll]
-  `((first ~coll)
-    (get-in ~m [(nth (rest ~coll) 0 nil)])
-    (get-in ~m [(nth (rest ~coll) 1 nil)])
-    (get-in ~m [(nth (rest ~coll) 2 nil)])
-    (get-in ~m [(nth (rest ~coll) 3 nil)])))
+                               :publisher (map-get-in % publisher-t#)
+                               :uri (map-get-in % uri-t#)
+                               :created (map-get-in % created-t#)
+                               :updated (map-get-in % updated-t#)
+                               :spatial (map-get-in % spatial-t#)
+                               :temporal (map-get-in % temporal-t#)
+                               :tags (map-get-in % tags-t#)
+                               :resources (map-get-in % resources-t#)
+                               :huntscore (map-get-in % huntscore-t#)))
+                       (map #(apply dissoc % nks#)))))))
 
 ;;;; By Hand Datasets
 

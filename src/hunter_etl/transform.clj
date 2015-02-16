@@ -135,7 +135,7 @@
    :huntscore   [str [:metrics :reuses] [:metrics :views]]})"
   [name keys fns-map]                   ; TODO: add booleans
   (cons 'defn
-        `(~name "pipeline to transform the collection received from the API
+        `(~name "Pipeline to transform the collection received from the API
   and make it meet the Hunter API scheme."
                 [coll#]
                 (let [ks# ~keys 

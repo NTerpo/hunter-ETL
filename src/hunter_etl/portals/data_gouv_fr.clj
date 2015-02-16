@@ -40,7 +40,7 @@
 (defn clean-spatial
   "returns the geographic coverage if available"
   [geo]
-  (if-not (empty? (get-spatial geo)) geo (geo-tagify "france")))
+  (if-not (empty? (get-spatial geo)) (get-spatial geo) (geo-tagify "france")))
 
 (defn get-temporal
   "returns, if available the temporal coverage
@@ -62,43 +62,7 @@
   [reuses recent followers]
   (calculate-huntscore reuses recent 0 followers))
 
-(defn dgf-transform
-  "pipeline to transform the collection received from the API
-  and make it meet the Hunter API scheme.
-
-  Are needed the following keys:
-  :title :description :publisher :uri :created :updated :spatial
-  :temporal :tags :resources :huntscore
-
-  First the collection is filtered with booleans
-  Then the Hunter keys are created from existent keys
-  And, finally, the other keys are removed"
-  [coll]
-  (let [ks [:title :page :description :last_modified :organization
-            :spatial :tags :temporal_coverage :resources :metrics]
-        nks (not-hunter-keys ks)]
-
-    (->> coll
-         (map #(select-keys % ks))
-         (map #(assoc %
-                 :description (notes->description (% :description) (% :title))
-                 :publisher (get-publisher (get-in % [:organization :name]))
-                 :uri (url->uri (% :page))
-                 :created (get-created (get-in % [:resources 0 :created_at])
-                                       (% :last_modified))
-                 :updated (% :last_modified)
-                 :spatial (clean-spatial (get-in % [:spatial :territories]))
-                 :temporal (get-temporal (get-in % [:temporal_coverage :start])
-                                         (get-in % [:temporal_coverage :end]))
-                 :tags (tags-with-title (% :title) (% :tags))
-                 :resources (filter-resources (% :resources))
-                 :huntscore (calculate-huntscore
-                             (get-in % [:metrics :reuses])
-                             (get-in % [:metrics :views])
-                             (get-in % [:metrics :followers]))))
-         (map #(apply dissoc % nks)))))
-
-(deftransform dgf-transform-2
+(deftransform dgf-transform
   [:title :page :description :last_modified :organization
    :spatial :tags :temporal_coverage :resources :metrics]
   
@@ -108,7 +72,7 @@
    :uri         [url->uri :page]
    :created     [get-created [:resources 0 :created_at] :last_modified]
    :updated     [identity :last_modified]
-   :spatial     [clean-spatial [:spatial :territories]] ; TODO: fix clean-spatial
+   :spatial     [clean-spatial [:spatial :territories]]
    :temporal    [get-temporal [:temporal_coverage :start] [:temporal_coverage :end]]
    :tags        [tags-with-title :title :tags]
    :resources   [filter-resources :resources]

@@ -91,17 +91,58 @@
 ;;;; Transformation Macro
 
 (defmacro deftransform
-  ""
-  [name keys & forms]
+  "Define a function that transform a collection of
+  dataset's metadata to make it meet the Hunter API
+  scheme.
+
+  The first argument is the name of the returned function
+
+  The seconde one is an array of the keys present in
+  the given collection of hashmaps and needed
+
+  Then it takes a list of pairs: :hunter-key (ƒ :old-key)
+  each function returns the final value of each key"
+  [name keys fns-map]                   ; TODO: add booleans
   (cons 'defn
-        `(~name ""
+        `(~name "pipeline to transform the collection received from the API
+  and make it meet the Hunter API scheme."
                 [coll#]
                 (let [ks# ~keys
-                      nks# (not-hunter-keys ks#)]
+                      nks# (not-hunter-keys ks#)
+                      title-t# (:title ~fns-map)
+                      description-t# (:description ~fns-map)
+                      publisher-t# (:publisher ~fns-map)
+                      uri-t# (:uri ~fns-map)
+                      created-t# (:created ~fns-map)
+                      updated-t# (:updated ~fns-map)
+                      spatial-t# (:spatial ~fns-map)
+                      temporal-t# (:temporal ~fns-map)
+                      tags-t# (:tags ~fns-map)
+                      resources-t# (:resources ~fns-map)
+                      huntscore-t# (:huntscore ~fns-map)]
+
                   (->> coll#
                        (map #(select-keys % ks#))
-                       (map #(assoc % ~@forms))
-                       (map #(apply dissoc % nks#)))))))
+                       (map #(assoc %
+                               :description (map-get-in % description-t#)
+                               ;; ((first description-t#)
+                               ;;  (get-in % [(nth (rest description-t#) 0)])
+                               ;;  (get-in % [(nth (rest description-t#) 1)]))
+                               ;; :publisher ((first publisher-t#)
+                               ;;               (get-in % [(nth (rest publisher-t#) 0)])
+                               ;;               (get-in % [(nth (rest publisher-t#) 1)]))
+                               ))
+                       (map #(apply dissoc % nks#)))
+                  ))))
+
+(defmacro map-get-in
+  ""
+  [m coll]
+  `((first ~coll)
+    (get-in ~m [(nth (rest ~coll) 0 nil)])
+    (get-in ~m [(nth (rest ~coll) 1 nil)])
+    (get-in ~m [(nth (rest ~coll) 2 nil)])
+    (get-in ~m [(nth (rest ~coll) 3 nil)])))
 
 ;;;; By Hand Datasets
 

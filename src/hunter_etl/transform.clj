@@ -71,11 +71,14 @@
 
 (defn calculate-huntscore
   "returns the sum of reuses, views/1000 recent-views/200 and followers/10"
-  [reuses & [total-views recent-views followers]]
-  (reduce + [(* 1 reuses)
-             (* 0.001 total-views)
-             (* 0.005 recent-views)
-             (* 0.1 followers)]))
+  ([reuses] (calculate-huntscore reuses 0 0 0))
+  ([reuses recent] (calculate-huntscore reuses recent 0 0))
+  ([reuses recent views] (calculate-huntscore reuses recent views 0))
+  ([reuses recent views followers]
+   (reduce + [(* 1 reuses)
+              (* 0.005 recent)
+              (* 0.001 views)
+              (* 0.1 followers)])))
 
 ;;;; Load
 

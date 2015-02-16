@@ -57,6 +57,11 @@
   [coll]
   (vec (map #(select-keys % [:title :format :url]) coll)))
 
+(defn dgf-huntscore
+  "adapts the calculate-huntscore function to data.gouv.fr data"
+  [reuses recent followers]
+  (calculate-huntscore reuses recent 0 followers))
+
 (defn dgf-transform
   "pipeline to transform the collection received from the API
   and make it meet the Hunter API scheme.
@@ -87,13 +92,10 @@
                                          (get-in % [:temporal_coverage :end]))
                  :tags (tags-with-title (% :title) (% :tags))
                  :resources (filter-resources (% :resources))
-                 :huntscore (str (get-in % [:metrics :reuses]) (get-in % [:metrics :views]))
-                 ;; (calculate-huntscore
-                            ;;  (get-in % [:metrics :reuses])
-                            ;;  (get-in % [:metrics :views])
-                            ;;  0
-                            ;;  (get-in % [:metrics :followers]))
-                 ))
+                 :huntscore (calculate-huntscore
+                             (get-in % [:metrics :reuses])
+                             (get-in % [:metrics :views])
+                             (get-in % [:metrics :followers]))))
          (map #(apply dissoc % nks)))))
 
 (deftransform dgf-transform-2
@@ -106,9 +108,8 @@
    :uri         [url->uri :page]
    :created     [get-created [:resources 0 :created_at] :last_modified]
    :updated     [identity :last_modified]
-   :spatial     [clean-spatial [:spatial :territories]]
+   :spatial     [clean-spatial [:spatial :territories]] ; TODO: fix clean-spatial
    :temporal    [get-temporal [:temporal_coverage :start] [:temporal_coverage :end]]
    :tags        [tags-with-title :title :tags]
    :resources   [filter-resources :resources]
-   :huntscore   [str [:metrics :reuses] [:metrics :views]]}) ; TODO:
-                                        ; fix calculate-huntscore
+   :huntscore   [dgf-huntscore [:metrics :reuses] [:metrics :views] [:metrics :followers]]})

@@ -87,9 +87,27 @@
                                          (get-in % [:temporal_coverage :end]))
                  :tags (tags-with-title (% :title) (% :tags))
                  :resources (filter-resources (% :resources))
-                 :huntscore (calculate-huntscore
-                             (get-in % [:metrics :reuses])
-                             (get-in % [:metrics :views])
-                             0
-                             (get-in % [:metrics :followers]))))
+                 :huntscore (str (get-in % [:metrics :reuses]) (get-in % [:metrics :views]))
+                 ;; (calculate-huntscore
+                            ;;  (get-in % [:metrics :reuses])
+                            ;;  (get-in % [:metrics :views])
+                            ;;  0
+                            ;;  (get-in % [:metrics :followers]))
+                 ))
          (map #(apply dissoc % nks)))))
+
+(deftransform dgf-transform-2
+  [:title :page :description :last_modified :organization
+   :spatial :tags :temporal_coverage :resources :metrics]
+  
+  {:title       [identity :title]
+   :description [notes->description :description :title]
+   :publisher   [get-publisher [:organization :name]]
+   :uri         [url->uri :page]
+   :created     [get-created [:resources 0 :created_at] :last_modified]
+   :updated     [identity :last_modified]
+   :spatial     [clean-spatial [:spatial :territories]]
+   :temporal    [get-temporal [:temporal_coverage :start] [:temporal_coverage :end]]
+   :tags        [tags-with-title :title :tags]
+   :resources   [filter-resources :resources]
+   :huntscore   [str [:metrics :reuses] [:metrics :views]]})

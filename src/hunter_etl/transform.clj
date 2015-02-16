@@ -71,7 +71,7 @@
 
 (defn calculate-huntscore
   "returns the sum of reuses, views/1000 recent-views/200 and followers/10"
-  [reuses total-views recent-views followers]
+  [reuses & [total-views recent-views followers]]
   (reduce + [(* 1 reuses)
              (* 0.001 total-views)
              (* 0.005 recent-views)
@@ -97,7 +97,8 @@
   Used in the deftransform macro to avoid redundancy"
   [m coll]
   (let [args# `(map #(get-in ~m [%]) (rest ~coll))]
-    (list apply `(first ~coll) args#)))
+    (list apply `(first ~coll) args#))) ; TODO: Fix when (get-in m
+                                        ; [:foo bar])
 
 (defmacro deftransform
   "Define a function that transform a collection of
@@ -116,7 +117,7 @@
         `(~name "pipeline to transform the collection received from the API
   and make it meet the Hunter API scheme."
                 [coll#]
-                (let [ks# ~keys
+                (let [ks# ~keys ; TODO: Fix when missing value
                       nks# (not-hunter-keys ks#)
                       title-t# (:title ~fns-map)
                       description-t# (:description ~fns-map)
@@ -133,6 +134,7 @@
                   (->> coll#
                        (map #(select-keys % ks#))
                        (map #(assoc %
+                               :title (map-get-in % title-t#)
                                :description (map-get-in % description-t#)
                                :publisher (map-get-in % publisher-t#)
                                :uri (map-get-in % uri-t#)

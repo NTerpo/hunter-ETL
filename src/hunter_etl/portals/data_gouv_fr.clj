@@ -7,7 +7,9 @@
 
 ;;;; extract
 
-(def dgf-url "http://www.data.gouv.fr/api")
+(def dgf-url
+  "data.gouv.fr API url: http://www.data.gouv.fr/api"
+  "http://www.data.gouv.fr/api")
 
 (defn dgf-extract
   "extract data from the data.gouv.fr API and clean the introduction

@@ -111,25 +111,38 @@
   the given collection of hashmaps and needed
 
   Then it takes a list of pairs: :hunter-key (ƒ :old-key)
-  each function returns the final value of each key"
+  each function returns the final value of each key
+
+  e.g.
+  (deftransform dgf-transform
+  
+  [:title :page :description :last_modified :organization
+   :spatial :tags :temporal_coverage :resources :metrics]
+  
+  {:title       [identity :title]
+   :description [notes->description :description :title]
+   :publisher   [get-publisher [:organization :name]]
+   :uri         [url->uri :page]
+   :created     [get-created [:resources 0 :created_at] :last_modified]
+   :updated     [identity :last_modified]
+   :spatial     [clean-spatial [:spatial :territories]]
+   :temporal    [get-temporal [:temporal_coverage :start] [:temporal_coverage :end]]
+   :tags        [tags-with-title :title :tags]
+   :resources   [filter-resources :resources]
+   :huntscore   [str [:metrics :reuses] [:metrics :views]]})"
   [name keys fns-map]                   ; TODO: add booleans
   (cons 'defn
         `(~name "pipeline to transform the collection received from the API
   and make it meet the Hunter API scheme."
                 [coll#]
-                (let [ks# ~keys ; TODO: Fix when missing value
+                (let [ks# ~keys 
                       nks# (not-hunter-keys ks#)
-                      title-t# (:title ~fns-map)
-                      description-t# (:description ~fns-map)
-                      publisher-t# (:publisher ~fns-map)
-                      uri-t# (:uri ~fns-map)
-                      created-t# (:created ~fns-map)
-                      updated-t# (:updated ~fns-map)
-                      spatial-t# (:spatial ~fns-map)
-                      temporal-t# (:temporal ~fns-map)
-                      tags-t# (:tags ~fns-map)
-                      resources-t# (:resources ~fns-map)
-                      huntscore-t# (:huntscore ~fns-map)]
+                      {title-t# :title description-t# :description
+                       publisher-t# :publisher uri-t# :uri
+                       created-t# :created updated-t# :updated
+                       spatial-t# :spatial temporal-t# :temporal
+                       tags-t# :tags resources-t# :resources
+                       huntscore-t# :huntscore} ~fns-map]
 
                   (->> coll#
                        (map #(select-keys % ks#))

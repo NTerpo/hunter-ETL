@@ -110,4 +110,5 @@
    :temporal    [get-temporal [:temporal_coverage :start] [:temporal_coverage :end]]
    :tags        [tags-with-title :title :tags]
    :resources   [filter-resources :resources]
-   :huntscore   [str [:metrics :reuses] [:metrics :views]]})
+   :huntscore   [str [:metrics :reuses] [:metrics :views]]}) ; TODO:
+                                        ; fix calculate-huntscore

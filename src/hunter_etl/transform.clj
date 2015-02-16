@@ -96,9 +96,9 @@
 
   Used in the deftransform macro to avoid redundancy"
   [m coll]
-  (let [args# `(map #(get-in ~m [%]) (rest ~coll))]
-    (list apply `(first ~coll) args#))) ; TODO: Fix when (get-in m
-                                        ; [:foo bar])
+  (let [args# `(map #(get-in ~m (if (vector? %) % [%]))
+                    (rest ~coll))]
+    (list apply `(first ~coll) args#)))
 
 (defmacro deftransform
   "Define a function that transform a collection of

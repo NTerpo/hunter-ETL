@@ -55,7 +55,7 @@
   "concat tags and tagified title"
   [title tags]
   (vec (concat (tagify-title title)
-               (extend-tags tags))))
+               (extend-tags (get-tags tags)))))
 
 (defn notes->description
   "if notes are present, returns them

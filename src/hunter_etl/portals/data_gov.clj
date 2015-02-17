@@ -40,37 +40,23 @@
     (extend-temporal (clean-temporal extras))
     "all"))
 
-(defn dg-transform
-  "pipeline to transform the collection received from the API
-  and make it meet the Hunter API scheme.
+(defn dg-huntscore
+  "calculate huntscore for data.gov"
+  [recent views]
+  (calculate-huntscore 0 recent views 0))
 
-  Are needed the following keys:
-  :title :description :publisher :uri :created :updated :spatial
-  :temporal :tags :resources :huntscore
+(deftransform dg-transform-2
+  [:title :notes :organization :resources :tags :extras
+   :revision_timestamp :tracking_summary]
 
-  First the collection is filtered with booleans
-  Then the Hunter keys are created from existent keys
-  And, finally, the other keys are removed"
-  [coll]
-  (let [ks [:title :notes :organization :resources :tags :extras
-            :revision_timestamp :tracking_summary]
-        nks (not-hunter-keys ks)]
-    (->> coll
-         (map #(select-keys % ks))
-         (map #(assoc %
-                 :description (notes->description (% :notes) (% :title))
-                 :publisher (get-in % [:organization :title])
-                 :uri (url->uri (get-in % [:resources 0 :url]))
-                 :created (get-created (get-in % [:resources 0 :created])
-                                       (% :revision_timestamp))
-                 :updated (% :revision_timestamp)
-                 :tags (tags-with-title (% :title) (get-tags (% :tags)))
-                 :spatial (geo-tagify "us")
-                 :temporal (get-temporal (% :extras))
-                 :resources (clean-resources (% :resources) (% :title))
-                 :huntscore (calculate-huntscore
-                             0
-                             (get-in % [:tracking_summary :total])
-                             (get-in % [:tracking_summary :recent])
-                             0)))
-         (map #(apply dissoc % nks)))))
+  {:title       [identity :title]
+   :description [notes->description :notes :title]
+   :publisher   [identity [:organization :title]]
+   :uri         [url->uri [:resources 0 :url]]
+   :created     [get-created [:resources 0 :created] :revision_timestamp]
+   :updated     [identity :revision_timestamp]
+   :tags        [tags-with-title :title :tags]
+   :spatial     [(geo-tagify "us")]
+   :temporal    [get-temporal :extras]
+   :resources   [clean-resources :resources :title]
+   :huntscore   [dg-huntscore [:tracking_summary :recent] [:tracking_summary :total]]})

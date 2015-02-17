@@ -153,11 +153,9 @@
 
   Used in the deftransform macro to avoid redundancy"
   [m coll]
-   (if (ifn? (first coll))
-    (let [args# `(map #(get-in ~m (if (vector? %) % [%]))
+  (let [args# `(map #(get-in ~m (if (vector? %) % [%]))
                       (rest ~coll))]
-      (list apply `(first ~coll) args#))
-    (first coll)))
+      (list apply `(first ~coll) args#)))
 
 (defmacro deftransform
   "Define a function that transform a collection of

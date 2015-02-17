@@ -79,3 +79,4 @@
    :tags        [tags-with-title :title :tags]
    :resources   [filter-resources :resources]
    :huntscore   [dgf-huntscore [:metrics :reuses] [:metrics :views] [:metrics :followers]]})
+

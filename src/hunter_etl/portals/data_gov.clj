@@ -7,7 +7,9 @@
 
 ;;;; extract
 
-(def dg-url "https://catalog.data.gov/api")
+(def dg-url
+  "data.gov API url: https://catalog.data.gov/api"
+  "https://catalog.data.gov/api")
 
 (defn dg-extract
   "extract data from the data.gov API and clean the introduction
@@ -45,7 +47,7 @@
   [recent views]
   (calculate-huntscore 0 recent views 0))
 
-(deftransform dg-transform-2
+(deftransform dg-transform
   [:title :notes :organization :resources :tags :extras
    :revision_timestamp :tracking_summary]
 

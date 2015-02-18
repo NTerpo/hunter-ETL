@@ -1,6 +1,5 @@
-# hunter-parser
+# Hunter ETL
 
-Hunter ETL
  * Extract data from different Open Data portals API
  * Transform them to meet the Hunter API scheme
  * Load them to the Hunter DB, via the API
@@ -20,7 +19,9 @@ Hunter ETL
     (deftransform dg-transform
       [:title :notes :organization :resources :tags :extras
        :revision_timestamp :tracking_summary]
-    
+
+      {:filter published?}
+
       {:title       [identity :title]
        :description [notes->description :notes :title]
        :publisher   [identity [:organization :title]]

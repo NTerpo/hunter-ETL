@@ -51,6 +51,8 @@
   [:title :notes :organization :resources :tags :extras
    :revision_timestamp :tracking_summary]
 
+  {}
+
   {:title       [identity :title]
    :description [notes->description :notes :title]
    :publisher   [identity [:organization :title]]

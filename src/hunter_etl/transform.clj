@@ -164,10 +164,14 @@
 
   The first argument is the name of the returned function
 
-  The seconde one is an array of the keys present in
+  The second one is an array of the keys present in
   the given collection of hashmaps and needed
 
-  Then it takes a list of pairs: :hunter-key (ƒ :old-key)
+  The third is a map {:filter boolean?} (or {}) used to
+  filter the collection (filter the unpublished dataset
+  for exemple)
+
+  Then it takes a map of pairs :hunter-key [ƒ :old-key]
   each function returns the final value of each key
 
   e.g.
@@ -175,6 +179,8 @@
   
   [:title :page :description :last_modified :organization
    :spatial :tags :temporal_coverage :resources :metrics]
+
+  {}
   
   {:title       [identity :title]
    :description [notes->description :description :title]
@@ -187,7 +193,8 @@
    :tags        [tags-with-title :title :tags]
    :resources   [filter-resources :resources]
    :huntscore   [str [:metrics :reuses] [:metrics :views]]})"
-  [name keys fns-map]                   ; TODO: add booleans
+  [name keys boolean fns-map]
+  {:pre [(and (vector? keys) (map? boolean) (map? fns-map))]}
   (cons 'defn
         `(~name "Pipeline to transform the collection received from the API
   and make it meet the Hunter API scheme."
@@ -199,9 +206,11 @@
                        created-t# :created updated-t# :updated
                        spatial-t# :spatial temporal-t# :temporal
                        tags-t# :tags resources-t# :resources
-                       huntscore-t# :huntscore} ~fns-map]
+                       huntscore-t# :huntscore} ~fns-map
+                      {bool# :filter :or {bool# identity}} ~boolean]
 
                   (->> coll#
+                       (filter bool#)
                        (map #(select-keys % ks#))
                        (map #(assoc %
                                :title (map-get-in % title-t#)

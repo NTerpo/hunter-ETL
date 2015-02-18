@@ -67,6 +67,8 @@
 (deftransform dgf-transform
   [:title :page :description :last_modified :organization
    :spatial :tags :temporal_coverage :resources :metrics]
+
+  {}
   
   {:title       [identity :title]
    :description [notes->description :description :title]

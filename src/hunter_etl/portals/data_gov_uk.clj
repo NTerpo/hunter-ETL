@@ -7,7 +7,9 @@
 
 ;;;; extract
 
-(def dguk-url "http://data.gov.uk/api")
+(def dguk-url
+  "data.gov.uk API url: https://data.gov.uk/api"
+  "http://data.gov.uk/api")
 
 (defn dguk-extract
   "extract data from the data.gov.uk API and clean the introduction
@@ -59,44 +61,33 @@
   [m]
   (not (empty? (get-in m [:resources]))))
 
+(defn published-and-resources?
+  "combines published? and resources? booleans"
+  [m]
+  (and published? resources?))
+
+(defn dguk-huntscore
+  "calculate huntscore for data.gov.uk data"
+  [recent views]
+  (calculate-huntscore 5 recent views 0))
+
 ;; transform 
 
-(defn dguk-transform
-  "pipeline to transform the collection received from the API
-  and make it meet the Hunter API scheme.
+(deftransform dguk-transform
+  [:title :notes :organization :resources :tracking_summary
+   :temporal_coverage-to :metadata_created :metadata_modified
+   :temporal_coverage-from :geographic_coverage :url :tags]
 
-  Are needed the following keys:
-  :title :description :publisher :uri :created :updated :spatial
-  :temporal :tags :resources :huntscore
-
-  First the collection is filtered with booleans
-  Then the Hunter keys are created from existent keys
-  And, finally, the other keys are removed"
-  [coll]
-  (let [ks [:title :notes :organization :resources :tracking_summary
-            :temporal_coverage-to :metadata_created :metadata_modified
-            :temporal_coverage-from :geographic_coverage :url :tags]
-        nks (not-hunter-keys ks)]
-
-    (->> coll
-         (filter published?)
-         (filter resources?)
-         (map #(select-keys % ks))
-         (map #(assoc %
-                 :description (notes->description (% :notes) (% :title))
-                 :publisher (get-in % [:organization :title])
-                 :uri (url->uri (% :url))
-                 :created (% :metadata_created) 
-                 :updated (% :metadata_modified)
-                 :spatial (get-spatial (% :geographic_coverage)) 
-                 :temporal (get-temporal (% :temporal_coverage_from)
-                                         (% :temporal_coverage_to)
-                                         (% :resources))
-                 :tags (tags-with-title (% :title) (get-tags (% :title)))
-                 :resources (clean-resources (% :resources) (% :title))
-                 :huntscore (calculate-huntscore
-                             5 
-                             (get-in % [:tracking_summary :total])
-                             (get-in % [:tracking_summary :recent])
-                             0)))   ; TODO: find a way to give a score
-         (map #(apply dissoc % nks)))))
+  {:filter published-and-resources?}
+  
+  {:title       [identity :title]
+   :description [notes->description :notes :title]
+   :publisher   [identity [:organization :title]]
+   :uri         [url->uri :url]
+   :created     [identity :metadata_created] 
+   :updated     [identity :metadata_modified]
+   :spatial     [get-spatial :geographic_coverage] 
+   :temporal    [get-temporal :temporal_coverage_from :temporal_coverage_to :resources]
+   :tags        [tags-with-title :title :tags]
+   :resources   [clean-resources :resources :title]
+   :huntscore   [dguk-huntscore [:tracking_summary :total] [:tracking_summary :recent]]})

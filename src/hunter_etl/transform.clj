@@ -226,8 +226,12 @@
                                           (map-get-in % spatial-t#))
                                :temporal (map-get-in % temporal-t#)
                                :tags (map-get-in % tags-t#)
-                               :resources (map-get-in % resources-t#)
-                               :huntscore (map-get-in % huntscore-t#)))
+                               :resources (if (= 1 (count resources-t#))
+                                            (first resources-t#)
+                                            (map-get-in % resources-t#))
+                               :huntscore (if (= 1 (count huntscore-t#))
+                                            (first huntscore-t#)
+                                            (map-get-in % huntscore-t#))))
                        (map #(apply dissoc % nks#)))))))
 
 

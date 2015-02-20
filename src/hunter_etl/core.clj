@@ -2,11 +2,12 @@
   (:require [hunter-etl.transform :refer [load-to-hunter-api]]
             [hunter-etl.portals.data-gov :refer [dg-extract dg-transform]]
             [hunter-etl.portals.data-gouv-fr :refer [dgf-extract dgf-transform]]
-            [hunter-etl.portals.data-gov-uk :refer [dguk-extract dguk-transform]]))
+            [hunter-etl.portals.data-gov-uk :refer [dguk-extract dguk-transform]]
+            [hunter-etl.portals.world-bank-data :refer [wb-extract wb-transform]]))
 
 (defn dg-etl
   "data.gov ETL
-  takes between 0 and 3 arguments :
+  takes between 0 and 3 arguments:
   ([integer][integer][string])
   
   0 => loads in the Hunter DB the most popular dgu dataset cleaned
@@ -22,7 +23,7 @@
 
 (defn dgf-etl
   "data.gouv.fr ETL
-  takes between 0 and 3 arguments :
+  takes between 0 and 3 arguments:
   ([integer][integer][string])
   
   0 => loads in the Hunter DB the most popular dgu dataset cleaned
@@ -38,7 +39,7 @@
 
 (defn dguk-etl
   "data.gov.uk ETL
-  takes between 0 and 3 arguments :
+  takes between 0 and 3 arguments:
   ([integer][integer][string])
   
   0 => loads in the Hunter DB the most popular dgu dataset cleaned
@@ -48,4 +49,17 @@
   [& args]
   (-> (apply dguk-extract args)
       dguk-transform
+      load-to-hunter-api))
+
+(defn wb-etl
+  "World Bank Data ETL
+  takes between 0 and 2 arguments:
+  ([integer < 120] [integer])
+  
+  0 => loads in the Hunter DB the most popular dgu dataset cleaned
+  1 => loads in the Hunter DB the given number of dgu datasets cleaned
+  2 => same with an page number ~ offset= page*number"
+  [& args]
+  (-> (apply wb-extract args)
+      wb-transform
       load-to-hunter-api))

@@ -2,15 +2,37 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-etl.transform :refer :all]))
+            [hunter-etl.transform :refer :all]
+            [hunter-etl.ckan :refer :all]))
 
-(def base-url "http://api.worldbank.org/v2/datacatalog?format=json&per_page=120")
+;;;; extract
+
+(def wb-url
+  "worldbank API url: http://api.worldbank.org"
+  "http://api.worldbank.org")
 
 (defn clean-response
+  "clean the response from World Bank API"
   [response]
   (let [resp (map :metatype (:datacatalog response))
         clean (fn [ds] (apply array-map (mapcat #(vector (keyword (:id %)) (:value %)) ds)))]
     (vec (map clean resp))))
+
+(defn wb-extract
+  "extract data from the World Bank API and clean the introduction
+  returns a collection of datasets metadata
+  number : number of dataset per page
+  offset : page number "
+  ([] (wb-extract 1 1))
+  ([number] (wb-extract number 1))
+  ([number offset]
+   (clean-response (get-result
+                    (str wb-url
+                         "/v2/datacatalog?format=json"
+                         "&per_page=" number
+                         "&page=" offset)))))
+
+;;;; transform
 
 (defn parse-and-convert-date
   [string]
@@ -38,29 +60,43 @@
          (clean-date :month) "-"
          (clean-date :day))))
 
-(defn get-worldbank-ds
-  "gets a number of the most popular datasets' metadata from the World Bank Data API and transforms them to match the Hunter API scheme"
-  []
-  (let [response (clean-response (get-result base-url))]
-    (->> (map #(select-keys % [:name :description :url :granularity :topics :lastrevisiondate :cite :coverage]) response)
-         (map #(assoc %
-                 :title (% :name)
-                 :publisher (if-not (nil? (% :cite))
-                              (% :cite)
-                              "World Bank Data")
-                 :uri (if-not (nil? (% :url))
-                        (% :url)
-                        "URI Not Available")
-                 :created (parse-and-convert-date (% :lastrevisiondate))
-                 :tags (vec (concat (tagify-title (% :name))
-                                    (extend-tags (st/split (% :topics) #" "))))
-                 :spatial (geo-tagify "world")
-                 :temporal (if (not (nil? (% :coverage)))
-                             (extend-temporal (% :coverage))
-                             "all")
-                 :updated (parse-and-convert-date (% :lastrevisiondate))
-                 :description (if-not (nil? (% :description))
-                                (% :description)
-                                (% :name))
-                 :huntscore (calculate-huntscore 5 0 0 0)))
-         (map #(dissoc % :name :granularity :topics :url :lastrevisiondate :cite :coverage)))))
+(defn get-publisher
+  "get the publisher and returns WorldBank Data if it isn't available"
+  [publisher]
+  (if-not (nil? publisher)
+    publisher
+    "World Bank Data"))
+
+(defn get-wb-tags
+ "get the tags from the topic key"
+ [tags]
+ (st/split tags #" "))
+
+(defn tags-with-title-wb
+ "concat tags and tagified title"
+ [title tags]
+ (vec (concat (tagify-title title)
+              (extend-tags (get-wb-tags tags)))))
+
+(defn get-temporal-wb
+  "get the temporal coverage from world bank datasets"
+  [coverage]
+  (if (not-empty coverage)
+    (extend-temporal coverage)
+    "all"))
+
+(deftransform wb-transform
+  [:name :description :url :granularity :topics :lastrevisiondate :cite :coverage]
+  {}
+  {:title       [identity :name]
+   :description [notes->description :description :name]
+   :publisher   [get-publisher :cite]
+   :uri         [url->uri :url]
+   :created     [parse-and-convert-date :lastrevisiondate]
+   :updated     [parse-and-convert-date :lastrevisiondate]
+   :spatial     [(geo-tagify "world")]
+   :temporal    [get-temporal-wb :coverage]
+   :tags        [tags-with-title-wb :name :topics]
+   :resources   [[:foo "bar"]]
+   :huntscore   [(calculate-huntscore 5 0 0 0)]})
+

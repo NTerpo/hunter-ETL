@@ -37,7 +37,7 @@
       (extend-temporal (str from "/" to))
       "all")))
 
-(defn get-temporal
+(defn get-temporal-uk
   "returns, if available the temporal coverage
   If it's not possible it try to find the temporal
   coverage from the resources"
@@ -85,7 +85,7 @@
    :created     [identity :metadata_created] 
    :updated     [identity :metadata_modified]
    :spatial     [get-spatial :geographic_coverage] 
-   :temporal    [get-temporal :temporal_coverage_from :temporal_coverage_to :resources]
+   :temporal    [get-temporal-uk :temporal_coverage_from :temporal_coverage_to :resources]
    :tags        [tags-with-title :title :tags]
    :resources   [clean-resources :resources :title]
    :huntscore   [dguk-huntscore [:tracking_summary :total] [:tracking_summary :recent]]})

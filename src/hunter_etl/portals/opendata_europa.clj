@@ -2,7 +2,9 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer :all]
             [clojure.string :as st]
-            [hunter-etl.transform :refer :all]))
+            [hunter-etl.transform :refer :all]
+            [hunter-etl.extract :refer :all]
+            [hunter-etl.util :refer :all]))
 
 (def base-url "http://open-data.europa.eu/data/api/action/package_search")
 
@@ -15,7 +17,7 @@
         clean-resp (:results (:result (parse-string resp true)))]
     clean-resp))
 
-(defn- get-tags
+(defn get-tags-eu
   [vect]
   (vec (map #(% :name) vect)))
 
@@ -30,7 +32,7 @@
       (str new-pre bulk suff)
       url)))
 
-(defn clean-resources
+(defn clean-resources-eu
   ""
   [coll title]
   (vec (->> (filter #(not (nil? (re-find #"Download dataset in" (% :description)))) coll)
@@ -54,7 +56,7 @@
                               "open-data.europa.eu")
                  :spatial (geo-tagify "europe")
                  :tags (vec (concat (extend-tags (tagify-title (% :title)))
-                                    (extend-tags (get-tags (% :keywords)))))
+                                    (extend-tags (get-tags-eu (% :keywords)))))
                  :description (if-not (empty? (% :description))
                                 (% :description)
                                 (% :title))
@@ -73,7 +75,7 @@
                                (if-not (empty? (% :modified_date))
                             (read-string (% :modified_date))
                             (% :metadata_created)))
-                 :resources (clean-resources (% :resources) (% :title))
+                 :resources (clean-resources-eu (% :resources) (% :title))
                  :huntscore (calculate-huntscore 5 0 0 0)))
          (map #(dissoc % :temporal_coverage_from :temporal_coverage_to :keywords :contact_name :url :geographical_coverage :modified_date :metadata_created)))))
 

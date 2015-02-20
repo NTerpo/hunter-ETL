@@ -1,9 +1,7 @@
 (ns hunter-etl.portals.data-gov-uk
-  (:require [clj-http.client :as client]
-            [cheshire.core :refer :all]
-            [clojure.string :as st]
-            [hunter-etl.transform :refer :all]
-            [hunter-etl.ckan :refer :all]))
+  (:require [hunter-etl.transform :refer :all]
+            [hunter-etl.util :refer :all]
+            [hunter-etl.extract :refer :all]))
 
 ;;;; extract
 

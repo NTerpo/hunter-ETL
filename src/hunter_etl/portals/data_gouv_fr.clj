@@ -1,9 +1,8 @@
 (ns hunter-etl.portals.data-gouv-fr
-  (:require [clj-http.client :as client]
-            [cheshire.core :refer :all]
-            [clojure.string :as st]
+  (:require [clojure.string :as st]
             [hunter-etl.transform :refer :all]
-            [hunter-etl.ckan :refer :all]))
+            [hunter-etl.util :refer :all]
+            [hunter-etl.extract :refer :all]))
 
 ;;;; extract
 
@@ -43,16 +42,6 @@
   "returns the geographic coverage if available"
   [geo]
   (if-not (empty? (get-spatial geo)) (get-spatial geo) (geo-tagify "france")))
-
-(defn get-temporal
-  "returns, if available the temporal coverage
-  If it's not possible it try to find the temporal
-  coverage from the resources"
-  [from to]
-  (if (and (not-empty from)
-           (not-empty to))
-    (extend-temporal (str from "/" to))
-    "all"))
 
 (defn filter-resources
   "returns a vector of resources limited to format, url and title"

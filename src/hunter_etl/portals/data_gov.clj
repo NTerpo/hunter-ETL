@@ -1,9 +1,7 @@
 (ns hunter-etl.portals.data-gov
-  (:require [clj-http.client :as client]
-            [cheshire.core :refer :all]
-            [clojure.string :as st]
-            [hunter-etl.transform :refer :all]
-            [hunter-etl.ckan :refer :all]))
+  (:require [hunter-etl.transform :refer :all]
+            [hunter-etl.util :refer :all]
+            [hunter-etl.extract :refer :all]))
 
 ;;;; extract
 
@@ -35,7 +33,7 @@
                 (map #(hash-map (keyword (% :key)) (% :value))
                      (map #(select-keys % [:key :value]) vect))))))
 
-(defn get-temporal
+(defn get-temporal-us
   "if possible, returns the extended vector of the cleaned temporal"
   [extras]
   (if-not (nil? (clean-temporal extras))
@@ -61,6 +59,6 @@
    :updated     [identity :revision_timestamp]
    :tags        [tags-with-title :title :tags]
    :spatial     [(geo-tagify "us")]
-   :temporal    [get-temporal :extras]
+   :temporal    [get-temporal-us :extras]
    :resources   [clean-resources :resources :title]
    :huntscore   [dg-huntscore [:tracking_summary :recent] [:tracking_summary :total]]})

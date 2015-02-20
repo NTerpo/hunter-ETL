@@ -1,9 +1,8 @@
 (ns hunter-etl.portals.world-bank-data
-  (:require [clj-http.client :as client]
-            [cheshire.core :refer :all]
-            [clojure.string :as st]
+  (:require [clojure.string :as st]
             [hunter-etl.transform :refer :all]
-            [hunter-etl.ckan :refer :all]))
+            [hunter-etl.util :refer :all]
+            [hunter-etl.extract :refer :all]))
 
 ;;;; extract
 

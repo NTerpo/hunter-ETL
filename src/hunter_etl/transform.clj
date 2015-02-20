@@ -1,20 +1,8 @@
 (ns hunter-etl.transform
   (:use [clojure.data :refer :all])
-  (:require [clj-http.client :as client]
-            [cheshire.core :refer :all]
-            [clojure.string :as st]))
+  (:require [hunter-etl.util :refer :all]))
 
-;;;; Extract
-
-(defn get-result
-  "gets metadata from an API and provides a first basic filter"
-  [url]
-  (-> url
-      (client/get)
-      :body
-      (parse-string true)))
-
-;;;; Transform
+;;;; Keys - Hunter API Scheme
 
 (def hunter-keys
   "keys needed in the Hunter API
@@ -30,88 +18,18 @@
    (second
     (diff (set hunter-keys) (set vect)))))
 
-(defn geo-tagify
-  "extend the spatial coverage tagging 'us'->'america'->'countries'->'world'"
-  [geo]
-  (let [geo (clojure.string/lower-case geo)]
-    (if-not (nil? (some #{geo} ["france" "us" "europe" "world" "uk"]))
-      ({"france" ["france" "fr" "europe" "schengen" "eu" "ue" "countries" "world" "all"]
-        "us" ["us" "usa" "america" "united states" "united-states" "united states of america" "united-states-of-america" "world" "countries" "all"]
-        "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]
-        "world" ["world" "all" "countries"]
-        "uk" ["uk" "england" "scotland" "wales" "ireland" "great-britain" "gb"]} geo)
-      (vector geo))))
-
-(defn extend-tags
-  "create new tags with the given tags vector by spliting words and cleaning"
-  [tags]
-  (->> (vec (disj (set (->> (map st/lower-case tags)
-                            (map st/trim)
-                            (mapcat #(st/split % #"-"))
-                            (concat tags))) "report" "data" "-" "service" "government"))
-       (map #(st/replace % "," ""))
-       (map #(st/replace % "(" ""))
-       (map #(st/replace % ")" ""))))
-
-(defn tagify-title
-  "create new tags from the title"
-  [title]
-  (vec (disj (set (-> (st/lower-case title)
-                      (st/split #" "))) "database" "-" "db" "data" "dataset" "to" "and")))
-
-(defn extend-temporal
-  "extend the temporal coverage with dates between limits"
-  [temporal]
-  (let [limits (re-seq #"[0-9]{4}" temporal)]
-    (if (nil? limits)
-      "all"
-      (if (= 1 (count limits))
-                        (vec limits)
-                        (vec
-                         (map str
-                              (range (Integer. (first limits))
-                                     (+ 1 (Integer. (last limits))))))))))
-
-(defn calculate-huntscore
-  "returns the sum of reuses, views/1000 recent-views/200 and followers/10"
-  ([reuses] (calculate-huntscore reuses 0 0 0))
-  ([reuses recent] (calculate-huntscore reuses recent 0 0))
-  ([reuses recent views] (calculate-huntscore reuses recent views 0))
-  ([reuses recent views followers]
-   (reduce + [(* 1 reuses)
-              (* 0.005 recent)
-              (* 0.001 views)
-              (* 0.1 followers)])))
-
-;;;; Load
-
-(def api-url
-  "URL of the Hunter API
-  used to POST the datasets after the transformations"
-  "http://localhost:3000/api/datasets")
-
-(defn load-to-hunter-api
-  "Send each dataset to the Hunter API via method post"
-  [coll]
-  (map #(client/post api-url
-                     {:body (generate-string %)
-                      :content-type "application/json"}) coll))
-
 ;;;; By Hand Datasets
 
 (defn create-ds
   "create a hunter dataset by hand
-  eg. (create-ds \"Global Bilateral Migration Database\"
-  \"Global matrices of bilateral migrant stocks spanning
-  the period 1960-2000...\"
-  \"World Bank\" \"http://databank.worldbank.org/data/views/
-  variableselection/selectvariables.aspx?source=global-bilateral
-  -migration\" [\"World\" \"East Asia & Pacific\" \"Europe\" \"
-  Asia\" \"Latin America\" \"Caribbean\" \"Middle East\" \"North
-  Africa\" \"South Asia\" \"Sub Saharan\" \"Africa\"] \"1960 - 2000\"
-  [\"migrants\" \"immigration\"] \"2011-07-01T00:00:00.000000\"
+  eg.
+  (create-ds \"Global Bilateral Migration Database\"
+  \"Global ...\"  \"World Bank\" \"http://databank.w...\"
+  [\"World\" \"Africa\"] \"1960 - 2000\"
+  [\"migrants\"] \"2011-07-01T00:00:00.000000\"
   \"2011-07-01T00:00:00.000000\" [] 5 0)"
-  [title description publisher uri spatial temporal tags created updated resources reuses views]
+  [title description publisher uri spatial temporal
+   tags created updated resources reuses views]
   (list {:title title
          :description description
          :publisher publisher

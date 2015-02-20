@@ -103,27 +103,7 @@
   "create a hunter dataset by hand
   eg. (create-ds \"Global Bilateral Migration Database\"
   \"Global matrices of bilateral migrant stocks spanning
-  the period 1960-2000, disaggregated by gender and based
-  primarily on the foreign-born concept are presented.
-  Over one thousand census and population register records
-  are combined to construct decennial matrices corresponding
-  to the last five completed census rounds.\\n\\nFor the
-  first time, a comprehensive picture of bilateral global
-  migration over the last half of the twentieth century
-  emerges. The data reveal that the global migrant stock
-  increased from 92 to 165 million between 1960 and 2000
-  . South-North migration is the fastest growing component
-  of international migration in both absolute and relative
-  terms. The United States remains the most important migrant
-  destination in the world, home to one fifth of the world’s
-  migrants and the top destination for migrants from no less
-  than sixty sending countries. Migration to Western Europe
-  remains largely from elsewhere in Europe. The oil-rich
-  Persian Gulf countries emerge as important destinations
-  for migrants from the Middle East, North Africa and
-  South and South-East Asia. Finally, although the global
-  migrant stock is still predominantly male, the proportion
-  of women increased noticeably between 1960 and 2000.\"
+  the period 1960-2000...\"
   \"World Bank\" \"http://databank.worldbank.org/data/views/
   variableselection/selectvariables.aspx?source=global-bilateral
   -migration\" [\"World\" \"East Asia & Pacific\" \"Europe\" \"
@@ -155,7 +135,21 @@
   [m coll]
   (let [args# `(map #(get-in ~m (if (vector? %) % [%]))
                       (rest ~coll))]
-      (list apply `(first ~coll) args#)))
+    (list apply `(first ~coll) args#)))
+
+(defmacro with-count-check
+  "Macro that checks the count of a vector.
+  If the count is 1, it returns the element, if not it
+  returns the body.
+
+  Used in deftransform to allow to pass transformation
+  in two different ways:
+  * :key [ƒ :key1 :key2]
+  * :key ['value']"
+  [v & body]
+  `(if (= 1 (count ~v))
+    (first ~v)
+    (do ~@body)))
 
 (defmacro deftransform
   "Define a function that transform a collection of
@@ -184,11 +178,11 @@
   
   {:title       [identity :title]
    :description [notes->description :description :title]
-   :publisher   [get-publisher [:organization :name]]
+   :publisher   [\"foo\"]
    :uri         [url->uri :page]
    :created     [get-created [:resources 0 :created_at] :last_modified]
    :updated     [identity :last_modified]
-   :spatial     [clean-spatial [:spatial :territories]]
+   :spatial     [(geo-tagify \"us\"]]
    :temporal    [get-temporal [:temporal_coverage :start] [:temporal_coverage :end]]
    :tags        [tags-with-title :title :tags]
    :resources   [filter-resources :resources]
@@ -213,25 +207,17 @@
                        (filter bool#)
                        (map #(select-keys % ks#))
                        (map #(assoc %
-                               :title (map-get-in % title-t#)
-                               :description (map-get-in % description-t#)
-                               :publisher (if (= 1 (count publisher-t#))
-                                            (first publisher-t#)
-                                            (map-get-in % publisher-t#))
-                               :uri (map-get-in % uri-t#)
-                               :created (map-get-in % created-t#)
-                               :updated (map-get-in % updated-t#)
-                               :spatial (if (= 1 (count spatial-t#))
-                                          (first spatial-t#)
-                                          (map-get-in % spatial-t#))
-                               :temporal (map-get-in % temporal-t#)
-                               :tags (map-get-in % tags-t#)
-                               :resources (if (= 1 (count resources-t#))
-                                            (first resources-t#)
-                                            (map-get-in % resources-t#))
-                               :huntscore (if (= 1 (count huntscore-t#))
-                                            (first huntscore-t#)
-                                            (map-get-in % huntscore-t#))))
+                               :title (with-count-check title-t# (map-get-in % title-t#))
+                               :description (with-count-check description-t# (map-get-in % description-t#))
+                               :publisher (with-count-check publisher-t# (map-get-in % publisher-t#))
+                               :uri (with-count-check uri-t# (map-get-in % uri-t#))
+                               :created (with-count-check created-t# (map-get-in % created-t#))
+                               :updated (with-count-check updated-t# (map-get-in % updated-t#))
+                               :spatial (with-count-check spatial-t# (map-get-in % spatial-t#))
+                               :temporal (with-count-check temporal-t# (map-get-in % temporal-t#))
+                               :tags (with-count-check tags-t# (map-get-in % tags-t#))
+                               :resources (with-count-check resources-t# (map-get-in % resources-t#))
+                               :huntscore (with-count-check huntscore-t# (map-get-in % huntscore-t#))))
                        (map #(apply dissoc % nks#)))))))
 
 

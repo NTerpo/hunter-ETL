@@ -69,6 +69,13 @@
     (first ~v)
     (do ~@body)))
 
+(defmacro keys->hunter-keys
+  ""
+  [fns m]
+  `(into {}
+         (for [[k# v#] ~fns]
+           [k# (with-count-check v# (map-get-in ~m v#))])))
+
 (defmacro deftransform
   "Define a function that transform a collection of
   dataset's metadata to make it meet the Hunter API
@@ -113,29 +120,12 @@
                 [coll#]
                 (let [ks# ~keys 
                       nks# (not-hunter-keys ks#)
-                      {title-t# :title description-t# :description
-                       publisher-t# :publisher uri-t# :uri
-                       created-t# :created updated-t# :updated
-                       spatial-t# :spatial temporal-t# :temporal
-                       tags-t# :tags resources-t# :resources
-                       huntscore-t# :huntscore} ~fns-map
                       {bool# :filter :or {bool# identity}} ~boolean]
-
+                  
                   (->> coll#
                        (filter bool#)
                        (map #(select-keys % ks#))
-                       (map #(assoc %
-                               :title (with-count-check title-t# (map-get-in % title-t#))
-                               :description (with-count-check description-t# (map-get-in % description-t#))
-                               :publisher (with-count-check publisher-t# (map-get-in % publisher-t#))
-                               :uri (with-count-check uri-t# (map-get-in % uri-t#))
-                               :created (with-count-check created-t# (map-get-in % created-t#))
-                               :updated (with-count-check updated-t# (map-get-in % updated-t#))
-                               :spatial (with-count-check spatial-t# (map-get-in % spatial-t#))
-                               :temporal (with-count-check temporal-t# (map-get-in % temporal-t#))
-                               :tags (with-count-check tags-t# (map-get-in % tags-t#))
-                               :resources (with-count-check resources-t# (map-get-in % resources-t#))
-                               :huntscore (with-count-check huntscore-t# (map-get-in % huntscore-t#))))
+                       (map #(assoc % ~@(apply concat (keys->hunter-keys ~fns-map %))))
                        (map #(apply dissoc % nks#)))))))
 
 

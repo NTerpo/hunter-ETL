@@ -126,7 +126,7 @@
                   (->> coll#
                        (filter bool#)
                        (map #(select-keys % ks#))
-                       (map #(assoc % (forms# %)))
+                       (map #(assoc % (eval (forms# %))))
                        (map #(apply dissoc % nks#)))))))
 
 

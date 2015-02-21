@@ -120,12 +120,13 @@
                 [coll#]
                 (let [ks# ~keys 
                       nks# (not-hunter-keys ks#)
-                      {bool# :filter :or {bool# identity}} ~boolean]
+                      {bool# :filter :or {bool# identity}} ~boolean
+                      forms# (fn [m#] (apply concat (keys->hunter-keys ~fns-map m#)))]
                   
                   (->> coll#
                        (filter bool#)
                        (map #(select-keys % ks#))
-                       (map #(assoc % ~@(apply concat (keys->hunter-keys ~fns-map %))))
+                       (map #(assoc % (forms# %)))
                        (map #(apply dissoc % nks#)))))))
 
 

@@ -62,7 +62,7 @@
 (defn published-and-resources?
   "combines published? and resources? booleans"
   [m]
-  (and published? resources?))
+  (and (published? m) (resources? m)))
 
 (defn dguk-huntscore
   "calculate huntscore for data.gov.uk data"

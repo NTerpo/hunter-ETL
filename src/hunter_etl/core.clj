@@ -4,7 +4,8 @@
             [hunter-etl.portals.data-gouv-fr :refer [dgf-extract dgf-transform]]
             [hunter-etl.portals.data-gov-uk :refer [dguk-extract dguk-transform]]
             [hunter-etl.portals.world-bank-data :refer [wb-extract wb-transform]]
-            [hunter-etl.portals.open-canada :refer [ca-extract ca-transform]]))
+            [hunter-etl.portals.open-canada :refer [ca-extract ca-transform]]
+            [hunter-etl.portals.energy-data-usa :refer [edex-extract edex-transform]]))
 
 (defn dg-etl
   "data.gov ETL
@@ -76,4 +77,18 @@
   [number offset]
   (-> (ca-extract number offset)
       ca-transform
+      load-to-hunter-api))
+
+(defn edex-etl
+  "Energy Data EXchange USA ETL
+  takes between 0 and 3 arguments:
+  ([integer][integer][string])
+  
+  0 => loads in the Hunter DB the most popular dgu dataset cleaned
+  1 => loads in the Hunter DB the given number of dgu datasets cleaned
+  2 => same with an offset
+  3 => same but only with datasets corresponding to a query"
+  [& args]
+  (-> (apply edex-extract args)
+      edex-transform
       load-to-hunter-api))

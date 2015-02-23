@@ -25,13 +25,6 @@
     publisher
     "data.gouv.fr"))
 
-(defn get-created
-  "try to get the created dataset date"
-  [resource alt]
-  (if-not (nil? resource)
-    resource
-    alt))
-
 (defn get-spatial
   "parses a collection of territories"
   [territories]

@@ -17,13 +17,6 @@
 
 ;;;; transform
 
-(defn get-created
-  "try to get the created dataset date"
-  [resource alt]
-  (if-not (nil? resource)
-    resource
-    alt))
-
 (defn clean-temporal
   "try to find the value of 'temporal' from a data.gov metadata dataset"
   [vect]

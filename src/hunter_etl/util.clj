@@ -23,6 +23,15 @@
     url
     "URI Not Available"))
 
+;; Dates
+
+(defn get-created
+  "try to get the created dataset date"
+  [resource alt]
+  (if-not (nil? resource)
+    resource
+    alt))
+
 ;; Spatial 
 
 (defn geo-tagify

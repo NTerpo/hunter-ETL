@@ -28,6 +28,25 @@
                       "&rows=" number
                       "&start=" offset)) :result) :results)))
 
+(defn extract-from-ckan-v3-with-sort
+  "extract data from most of the CKAN API v3
+  takes as argument the api URL and optionnaly
+  the number of dataset's metadata wanted,
+  an offset and a query string"
+  ([base-api sort] (extract-from-ckan-v3-with-sort base-api sort 1 0 ""))
+  
+  ([base-api sort number] (extract-from-ckan-v3-with-sort base-api sort number 0 ""))
+
+  ([base-api sort number offset] (extract-from-ckan-v3-with-sort base-api sort number offset ""))
+  
+  ([base-api sort number offset request]
+   (((get-result (str base-api "/3/"
+                      "action/package_search?"
+                      "q=" request
+                      sort
+                      "&rows=" number
+                      "&start=" offset)) :result) :results)))
+
 (defn extract-from-ckan-v1
   "extract data from most of the CKAN API v1
   takes as argument the api URL and optionnaly

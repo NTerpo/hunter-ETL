@@ -32,13 +32,6 @@
       notes
       title)))
 
-(defn get-created
-  "try to get the created dataset date"
-  [resource alt]
-  (if-not (nil? resource)
-    resource
-    alt))
-
 (deftransform ca-transform
   [:title :title_fra :notes :notes_fra :organization :url :metadata_created :metadata_modified :tags :time_period_coverage_start :time_period_coverage_end :resources :tracking_summary :revision_timestamp]
   {}

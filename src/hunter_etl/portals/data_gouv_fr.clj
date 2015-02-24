@@ -41,6 +41,12 @@
   [coll]
   (vec (map #(select-keys % [:title :format :url]) coll)))
 
+(defn tags-with-title-dgf
+  "concat tags and tagified title"
+  [title tags]
+  (vec (concat (tagify-title title)
+               (extend-tags tags))))
+
 (defn dgf-huntscore
   "adapts the calculate-huntscore function to data.gouv.fr data"
   [reuses recent followers]
@@ -49,9 +55,7 @@
 (deftransform dgf-transform
   [:title :page :description :last_modified :organization
    :spatial :tags :temporal_coverage :resources :metrics]
-
   {}
-  
   {:title       [identity :title]
    :description [notes->description :description :title]
    :publisher   [get-publisher [:organization :name]]
@@ -60,7 +64,6 @@
    :updated     [identity :last_modified]
    :spatial     [clean-spatial [:spatial :territories]]
    :temporal    [get-temporal [:temporal_coverage :start] [:temporal_coverage :end]]
-   :tags        [tags-with-title :title :tags]
+   :tags        [tags-with-title-dgf :title :tags]
    :resources   [filter-resources :resources]
    :huntscore   [dgf-huntscore [:metrics :reuses] [:metrics :views] [:metrics :followers]]})
-

@@ -94,13 +94,11 @@
   each function returns the final value of each key
 
   e.g.
+
   (deftransform dgf-transform
-  
   [:title :page :description :last_modified :organization
    :spatial :tags :temporal_coverage :resources :metrics]
-
   {}
-  
   {:title       [identity :title]
    :description [notes->description :description :title]
    :publisher   [\"foo\"]
@@ -115,18 +113,16 @@
   [name keys boolean fns-map]
   {:pre [(and (vector? keys) (map? boolean) (map? fns-map))]}
   (cons 'defn
-        `(~name "Pipeline to transform the collection received from the API
-  and make it meet the Hunter API scheme."
+        `(~name "Pipeline to transform the collection received from
+  the API and make it meet the Hunter API scheme."
                 [coll#]
                 (let [ks# ~keys 
                       nks# (not-hunter-keys ks#)
                       {bool# :filter :or {bool# identity}} ~boolean
-                      forms# (fn [m#] (apply concat (keys->hunter-keys ~fns-map m#)))]
-                  
+                      forms# (fn [m#] (keys->hunter-keys ~fns-map m#))]
+
                   (->> coll#
                        (filter bool#)
                        (map #(select-keys % ks#))
-                       (map #(assoc % (eval (forms# %))))
-                       (map #(apply dissoc % nks#)))))))
-
-
+                       (map #(merge % (forms# %)))
+                       (map #(apply dissoc % nks#))))))) 

@@ -13,7 +13,7 @@
   "extract data from the Energy Data EXchange USA API and clean
   the introduction returns a collection of datasets metadata"
   [& args]
-  (apply extract-from-ckan-v3-with-sort edex-url "&sort=views_recent+desc" args ))
+  (apply extract-from-ckan-v3-with-sort edex-url "&sort=views_recent+desc" args))
 
 ;;;; transform
 

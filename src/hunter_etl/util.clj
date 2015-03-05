@@ -39,12 +39,12 @@
   [geo]
   (let [geo (st/lower-case geo)]
     (if-not (nil? (some #{geo} ["france" "us" "europe" "world" "uk" "canada"]))
-      ({"france" ["france" "fr" "europe" "schengen" "eu" "ue" "countries" "world" "all"]
-        "us" ["us" "usa" "america" "united states" "united-states" "united states of america" "united-states-of-america" "world" "countries" "all"]
+      ({"france" ["france" "fr"]
+        "us" ["us" "usa" "america" "united states"]
         "europe" ["europe" "schengen" "eu" "ue" "countries" "world" "all"]
         "world" ["world" "all" "countries"]
         "uk" ["uk" "england" "scotland" "wales" "ireland" "great-britain" "gb"]
-        "canada" ["canada" "world" "all"]} geo)
+        "canada" ["canada"]} geo)
       (vector geo))))
 
 ;; Temporal
